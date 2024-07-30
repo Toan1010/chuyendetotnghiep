@@ -1,12 +1,13 @@
 import sequelize from "../configurations/database";
 import { DataTypes, Model } from "sequelize";
+import { AdminRole } from "../type";
 
 class Admin extends Model {
   public id!: number;
   public admin_name!: string;
   public admin_email!: string;
   public hash_password!: string;
-  public role!: string;
+  public role!: AdminRole;
   public phone!: string;
   public avatar!: string;
 }
@@ -35,7 +36,7 @@ Admin.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM(...Object.values(AdminRole)),
       allowNull: false,
     },
     phone: {

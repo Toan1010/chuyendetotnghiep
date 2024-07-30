@@ -18,16 +18,16 @@ interface Environment {
 
 const environment: Environment = {
   port: parseInt(process.env.PORT || "3000", 10),
-  access_token_key: process.env.JWT_ACCESS_KEY || "",
-  crypto_key: process.env.CRYPTO_KEY || "",
-  refresh_token_key: process.env.JWT_REFRESH_KEY || "",
+  access_token_key: process.env.ACCESS_TOKEN_KEY || "accessToken",
+  refresh_token_key: process.env.REFRESH_TOKEN_KEY || "refreshToken",
+  crypto_key: process.env.CRYPTO_KEY || "32charactersstring",
   db_host: process.env.DB_HOST || "",
   db_port: parseInt(process.env.DB_PORT || "3306", 10),
-  db_user: process.env.DB_USER || "root",
+  db_user: process.env.DB_USER || "",
   db_password: process.env.DB_PASSWORD || "",
-  db_name: process.env.DB_NAME || "chuyendetotnghiep",
-  email_app: process.env.EMAIL_APP || "",
-  email_password: process.env.EMAIL_PASSWORD || "",
+  db_name: process.env.DB_NAME || "database_name",
+  email_app: process.env.GMAIL_APP || "your_email_address",
+  email_password: process.env.GMAIL_PASSWORD || "your_email_password_app",
 };
 
 export default environment;
