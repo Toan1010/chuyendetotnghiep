@@ -11,17 +11,15 @@ export const verifyAccessToken = async (
     if (!authHeader) {
       return res.status(401).json({ message: "Access token required" });
     }
-
     const accessToken = authHeader.split(" ")[1];
     if (!accessToken) {
       return res.status(401).json({ message: "Access token required" });
     }
-
     const user = await tokenVerify(accessToken, "access");
     if (!user) {
       return res.status(403).json({ message: "Invalid access token" });
     }
-    req.body.user = user; // Giả sử bạn có định nghĩa type của Request có thuộc tính user
+    req.body.user = user; 
     next();
   } catch (error) {
     console.error(error);

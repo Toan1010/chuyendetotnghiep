@@ -14,6 +14,9 @@ interface Environment {
   db_name: string;
   email_app: string;
   email_password: string;
+  cloud_name: string;
+  cloud_key: string;
+  cloud_secret: string;
 }
 
 const environment: Environment = {
@@ -28,6 +31,9 @@ const environment: Environment = {
   db_name: process.env.DB_NAME || "database_name",
   email_app: process.env.GMAIL_APP || "your_email_address",
   email_password: process.env.GMAIL_PASSWORD || "your_email_password_app",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
+  cloud_key: process.env.CLOUDINARY_API_KEY || "",
+  cloud_secret: process.env.CLOUDINARY_API_SECRET || "",
 };
 
 export default environment;

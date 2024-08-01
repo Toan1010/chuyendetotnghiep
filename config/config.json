@@ -1,0 +1,16 @@
+{
+  "development": {
+    "username": "nguyenductoan538_gma",
+    "password": "z0l3oWfctEnkA2piwB-IUg",
+    "database": "test",
+    "host": "sadder-fish-7429.6xw.aws-ap-southeast-1.cockroachlabs.cloud",
+    "port": 26257,
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  }
+}
