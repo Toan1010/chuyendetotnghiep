@@ -12,5 +12,20 @@ export interface TokenPayload {
 
 export interface ResetPasswordData {
   email: string;
-  expired: string; // Hoặc Date nếu bạn lưu trữ dưới dạng đối tượng Date
+  expired: string;
+}
+
+export interface Student {
+  student_name: string;
+  student_email: string;
+  hash_password: string;
+  phone: string;
+  avatar: string;
+}
+
+export interface UpdateStudentData {
+  student_name?: string;
+  student_email?: string;
+  phone?: string;
+  avatar?: string;
 }

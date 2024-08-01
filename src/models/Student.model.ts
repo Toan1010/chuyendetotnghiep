@@ -49,6 +49,6 @@ Student.init(
       },
     },
   },
-  { tableName: "Student", sequelize, timestamps: false }
+  { tableName: "student", sequelize, timestamps: false }
 );
 export default Student;

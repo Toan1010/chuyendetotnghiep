@@ -1,20 +1,12 @@
 import { Sequelize } from "sequelize";
 import env from "./environment";
 
-// Tạo một instance của Sequelize với cấu hình từ biến môi trường
 const sequelize = new Sequelize(env.db_name, env.db_user, env.db_password, {
   host: env.db_host,
   port: env.db_port,
-  dialect: "postgres",
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
-  },
+  dialect: "mysql"
 });
 
-// Hàm kiểm tra kết nối với cơ sở dữ liệu
 async function authenticateDatabase() {
   try {
     await sequelize.authenticate();
@@ -25,7 +17,6 @@ async function authenticateDatabase() {
   }
 }
 
-// Hàm đồng bộ hóa các mô hình với cơ sở dữ liệu
 async function syncDatabase() {
   try {
     await sequelize.sync();
@@ -36,6 +27,5 @@ async function syncDatabase() {
   }
 }
 
-// Xuất các hàm và instance của Sequelize
 export default sequelize;
 export { authenticateDatabase, syncDatabase };

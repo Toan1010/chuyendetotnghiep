@@ -36,7 +36,7 @@ Admin.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM("super_admin", "student_admin", "course_admin"),
+      type: DataTypes.ENUM(...Object.values(AdminRole)),
       allowNull: false,
     },
     phone: {
