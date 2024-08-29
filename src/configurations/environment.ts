@@ -2,24 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-interface Environment {
-  port: number;
-  access_token_key: string;
-  refresh_token_key: string;
-  crypto_key: string;
-  db_host: string;
-  db_port: number;
-  db_user: string;
-  db_password: string;
-  db_name: string;
-  email_app: string;
-  email_password: string;
-  cloud_name: string;
-  cloud_key: string;
-  cloud_secret: string;
-}
-
-const environment: Environment = {
+const environment = {
   port: parseInt(process.env.PORT || "3000", 10),
   access_token_key: process.env.ACCESS_TOKEN_KEY || "accessToken",
   refresh_token_key: process.env.REFRESH_TOKEN_KEY || "refreshToken",

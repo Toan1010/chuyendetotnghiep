@@ -1,8 +1,7 @@
 import cloudinary from "./cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import path from "path";
-import { Request } from "express";
-import multer, { FileFilterCallback } from "multer";
+import multer from "multer";
 
 const imageStorage = new CloudinaryStorage({
   cloudinary: cloudinary,

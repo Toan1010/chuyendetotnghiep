@@ -15,7 +15,7 @@ export const tokenVerify = async (
     const key = type == "access" ? env.access_token_key : env.refresh_token_key;
     const decoded = jwt.verify(token, key);
     if (typeof decoded === "object" && decoded !== null) {
-      const { exp, iat, ...rest } = decoded; // Loại bỏ exp và iat
+      const { exp, iat, ...rest } = decoded; 
       return { ...rest };
     } else {
       throw new Error("Decoded token is not an object");

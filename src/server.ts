@@ -4,7 +4,6 @@ import cors from "cors";
 
 import env from "./configurations/environment";
 import { responseFormatter } from "./middlewares/formatResponse";
-import routes from "./routes";
 import { authenticateDatabase, syncDatabase } from "./configurations/database";
 
 const app = express();
@@ -17,7 +16,6 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 app.use(responseFormatter);
 
-routes(app);
 const startServer = async () => {
   try {
     await authenticateDatabase();
