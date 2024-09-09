@@ -1,62 +1,59 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../configurations/database";
-import Topic from "./Topic.Model";
+import Course from "./Course.Model";
 
-class Course extends Model {
+class Lesson extends Model {
   public id!: number;
-  public topic_id!: number;
+  public course_id!: number;
+  public inCourse!: number;
   public name!: string;
   public description!: string;
-  public thumbnail!: string;
+  public context!: string;
   public slug!: string;
-  public type!: boolean;
 }
 
-Course.init(
+Lesson.init(
   {
     id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
       primaryKey: true,
+      autoIncrement: true,
     },
-    topic_id: {
+    course_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       references: {
-        model: Topic,
+        model: Course,
         key: "id",
       },
-      allowNull: true,
+      allowNull: false,
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
+    },
+    inCourse: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     name: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      unique: true,
     },
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    thumbnail: {
+    context: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      defaultValue: "course.png",
     },
     slug: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
-    },
-    type: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: 0,
     },
   },
-  { tableName: "course", sequelize, timestamps: true }
+  { tableName: "lesson", sequelize, timestamps: true }
 );
 
-Topic.hasMany(Course, { foreignKey: "topic_id", as: "course" });
-Course.belongsTo(Topic, { foreignKey: "topic_id", as: "topic" });
+Course.hasMany(Lesson, { foreignKey: "course_id", as: "lesson" });
+Lesson.belongsTo(Course, { foreignKey: "course_id", as: "course" });
 
-export default Course;
+export default Lesson;

@@ -1,0 +1,21 @@
+import { Router, Express } from "express";
+import AuthRoute from "./Auth.route";
+import AdminRoute from "./Admin.route";
+import StudentRoute from "./Student.route";
+import TopicRoute from "./Topic.route";
+import CourseRoute from "./Course.route";
+import LessonRoute from "./Lesson.route";
+
+const router: Router = Router();
+const routes = (app: Express) => {
+  router.use("/auth", AuthRoute);
+  router.use("/admin", AdminRoute);
+  router.use("/student", StudentRoute);
+  router.use("/topic", TopicRoute);
+  router.use("/course", CourseRoute);
+  router.use("/lesson", LessonRoute);
+
+  app.use("/api", router);
+};
+
+export default routes;

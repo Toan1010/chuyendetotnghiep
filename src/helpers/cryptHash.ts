@@ -1,10 +1,9 @@
 import crypto from "crypto";
 import env from "../configurations/environment";
-import { ResetPasswordData } from "../type";
 
 const key = env.crypto_key;
 
-const encrypt = (data: any) => {
+const encryptString = (data: any) => {
   const cipher = crypto.createCipheriv(
     "aes-256-cbc",
     Buffer.from(key),
@@ -15,18 +14,17 @@ const encrypt = (data: any) => {
   return encrypted;
 };
 
-const decrypt = (encryptedText: any): ResetPasswordData => {
-   const decipher = crypto.createDecipheriv(
-     "aes-256-cbc",
-     Buffer.from(key, "utf-8"),
-     Buffer.from(key.slice(0, 16), "utf-8") // Sử dụng 16 byte đầu tiên của key làm IV
-   );
+const decryptString = (encryptedText: any) => {
+  const decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    Buffer.from(key, "utf-8"),
+    Buffer.from(key.slice(0, 16), "utf-8") 
+  );
 
-   let decrypted = decipher.update(encryptedText, "hex", "utf8");
-   decrypted += decipher.final("utf8");
+  let decrypted = decipher.update(encryptedText, "hex", "utf8");
+  decrypted += decipher.final("utf8");
 
-   // Chuyển đổi chuỗi JSON thành đối tượng
-   return JSON.parse(decrypted);
+  return JSON.parse(decrypted);
 };
 
-export { encrypt, decrypt };
+export { encryptString, decryptString };
