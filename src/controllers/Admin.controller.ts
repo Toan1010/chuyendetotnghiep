@@ -1,58 +1,60 @@
 import { Request, Response } from "express";
-import {
-  isExist,
-  updateAdmin,
-  listAdmin,
-  addAdmin,
-} from "../services/Admin.service";
+import { isExist, updateAdmin, addAdmin } from "../services/Admin.service";
 import { decryptString, encryptString } from "../helpers/cryptHash";
 import { sendResetEmail } from "../helpers/sendingEmail";
 import { bcryptDecrypt, bcryptEncrypt } from "../helpers/bcryptHash";
-import { error } from "console";
+import { Op } from "sequelize";
+import Admin from "../models/Admin.model";
 
 let ResetPasswordlist: string[] = [];
 
 export const GetListAdmin = async (req: Request, res: Response) => {
   try {
-    let { limit = 10, page = 1, key_name = "" } = req.query;
-    key_name = typeof key_name === "string" ? key_name : "";
+    let { limit = 10, page = 1, key_name = "", order = true } = req.query;
     page = parseInt(page as string);
     limit = parseInt(limit as string);
-    if (isNaN(page) || isNaN(limit)) {
-      return res.status(400).json({ message: "Invalid pagination parameters" });
-    }
     const offset = (page - 1) * limit;
-    const result = await listAdmin(limit, offset, key_name);
-    return res.json({ result });
+    const whereCondition: any = {
+      [Op.or]: [{ fullName: { [Op.like]: `%${key_name}%` } }],
+    };
+    const orderDirection = order === "false" ? "DESC" : "ASC";
+
+    const { count, rows: admins } = await Admin.findAndCountAll({
+      limit,
+      offset,
+      where: whereCondition,
+      attributes: [
+        "id",
+        "fullName",
+        "email",
+        "role",
+        "course_permission",
+        "student_permission",
+        "status",
+      ],
+      order: [["id", orderDirection]],
+    });
+    return res.json({ count, admins });
   } catch (error: any) {
-    return res.json({ error: error.message });
+    return res.json(error.message);
   }
 };
 
 export const ForgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: "Email không được cung cấp" });
-    }
-    const student = await isExist(undefined, email);
-    if (!student) {
-      return res
-        .status(404)
-        .json({ error: "Không tìm thấy sinh viên với email này" });
+    const admin = await Admin.findOne({ where: { email } });
+    if (!admin) {
+      return res.status(404).json("Email chưa được đăng ký!");
     }
     const data = { email: email, expired: new Date(Date.now() + 3600000) };
     const dataString = JSON.stringify(data);
     const resetString = encryptString(dataString);
     ResetPasswordlist.push(resetString);
     await sendResetEmail(email, resetString);
-    return res
-      .status(200)
-      .json({ message: "Kiểm tra email để thay dổi mật khẩu!" });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Có lỗi xảy ra trong quá trình xử lý quên mật khẩu" });
+    return res.status(200).json("Kiểm tra email để thay dổi mật khẩu!");
+  } catch (error: any) {
+    return res.status(500).json(error.message);
   }
 };
 
@@ -61,31 +63,26 @@ export const ResetPassword = async (req: Request, res: Response) => {
     const resetString = req.params.reset;
     const { new_password, confirm_password } = req.body;
     if (new_password !== confirm_password) {
-      return res
-        .status(401)
-        .json({ error: "Xác nhận mật khẩu không thành công!" });
+      return res.status(401).json("Xác nhận mẩtj khẩu không thành công!");
     }
     if (!ResetPasswordlist.includes(resetString)) {
-      return res.status(403).json({ error: "Reset string không đúng!" });
+      return res.status(403).json("Yêu cầu làm mới bị lỗi!");
     }
     const { email, expired } = decryptString(resetString);
     if (new Date() > new Date(expired)) {
-      return res.status(400).json({ error: "Reset string đã hết hạn!" });
+      return res.status(400).json("Yêu cầu làm mới đã hết hạn!");
     }
-    const student = await isExist(undefined, email);
-    if (!student) {
-      return res.status(500).json({ error: "Lỗi server" });
-    }
+    const admin = await Admin.findOne({ where: { email } });
     const newPassword = await bcryptEncrypt(new_password);
-    await updateAdmin(student.id, {
+    await admin?.update({
       hashPassword: newPassword,
     });
     ResetPasswordlist = ResetPasswordlist.filter(
       (token) => token !== resetString
     );
-    return res.json({ message: "Password được cập nhật thành công!" });
+    return res.json("Password được cập nhật thành công!");
   } catch (error: any) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -98,35 +95,37 @@ export const CreateAdmin = async (req: Request, res: Response) => {
       course_permission = 0,
       student_permission = 0,
     } = req.body;
-    const exist = await isExist(undefined, email);
+    const exist = await Admin.findOne({ where: { email } });
     if (exist) {
-      return res.status(409).json({ error: "Email đã tồn tại trong hệ thống" });
+      return res.status(409).json("Email đã được đăng ký!");
     }
     const hashPassword = await bcryptEncrypt(password);
-    await addAdmin(
+    await Admin.create({
       fullName,
       email,
       hashPassword,
       course_permission,
-      student_permission
-    );
-    return res.json({ message: "Tạo tài khoản thành công!" });
+      student_permission,
+      role: "normal_admin",
+    });
+    return res.json("Tạo tài khoản thành công!");
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
 export const UpdateStatus = async (req: Request, res: Response) => {
   try {
-    const id = req.params.admin_id;
-    const admin = await isExist(parseInt(id));
+    const id = req.params.id;
+    const admin = await Admin.findByPk(parseInt(id));
+    const { status } = req.body;
     if (!admin) {
-      return res.status(404).json({ error: "Không tìm thấy Admin" });
+      return res.status(404).json("Không tìm thấy Admin");
     }
-    await admin.update({ status: !admin.status });
-    return res.json({ message: "Cập nhật status thành công!" });
+    await admin.update({ status: status });
+    return res.json("Thay đổi trạng thái thành công!");
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -134,24 +133,32 @@ export const UpdatePermission = async (req: Request, res: Response) => {
   try {
     const { course_permission = 0, student_permission = 0 } = req.body;
     const id = req.params.id;
-    const admin = await isExist(parseInt(id));
+    const admin = await Admin.findByPk(parseInt(id));
     if (!admin) {
-      return res.status(404).json({ error: "Không tìm thấy admin!" });
+      return res.status(404).json("Không tìm thấy admin!");
     }
     await admin.update({ course_permission, student_permission });
-    return res.json({ message: "Đã cập nhật quyền cho admin!" });
+    return res.json("Đã cập nhật quyền cho admin!");
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
 export const MyInfo = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const admin = await isExist(user.id);
-    return res.json({ my_info: admin });
+    const admin = await Admin.findByPk(user.id, {
+      attributes: [
+        "fullName",
+        "email",
+        "course_permission",
+        "student_permission",
+      ],
+    });
+    const adminData = admin ? admin.get({ plain: true }) : null;
+    return res.json(adminData);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -159,11 +166,11 @@ export const UpdateMyInfo = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     const user = (req as any).user;
-    const admin = await isExist(user.id);
+    const admin = await Admin.findByPk(user.id);
     await admin?.update({ email });
     return res.json({ message: "Cập nhật thông tin thành công!" });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -172,22 +179,20 @@ export const ChangePassword = async (req: Request, res: Response) => {
     const user = (req as any).user;
     const { current_password, new_password, confirm_password } = req.body;
     if (new_password !== confirm_password) {
-      return res.status(401).json({ error: "Xác nhận mật khẩu không đúng!" });
+      return res.status(401).json("Xác nhận mật khẩu không đúng!");
     }
-    const admin = await isExist(parseInt(user.id));
+    const admin = await Admin.findByPk(parseInt(user.id));
     if (!admin) {
-      return res.status(500).json({ error: "Server đang bị lỗi!" });
+      return res.status(500).json("Server đang bị lỗi!");
     }
     const isPass = await bcryptDecrypt(current_password, admin.hashPassword);
     if (!isPass) {
-      return res
-        .status(401)
-        .json({ error: "Mật khẩu hiện tại cảu bạn không đúng!" });
+      return res.status(401).json("Mật khẩu hiện tại của bạn không đúng!");
     }
     const hashPassword = await bcryptEncrypt(new_password);
     await admin.update({ hashPassword });
-    return res.json({ message: "Cập nhật mật khẩu thành công!" });
+    return res.json("Cập nhật mật khẩu thành công!");
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };

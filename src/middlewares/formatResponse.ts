@@ -9,7 +9,7 @@ export function responseFormatter(
     const formattedBody = {
       code: res.statusCode,
       status: res.statusCode >= 400 ? "failed" : "success",
-      data: body,
+      ...(res.statusCode >= 400 ? { error: body } : { data: body }),
     };
 
     return originalJson.call(res, formattedBody);

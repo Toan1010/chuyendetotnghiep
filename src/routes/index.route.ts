@@ -4,7 +4,8 @@ import AdminRoute from "./Admin.route";
 import StudentRoute from "./Student.route";
 import TopicRoute from "./Topic.route";
 import CourseRoute from "./Course.route";
-import LessonRoute from "./Lesson.route";
+import MaterialRoute from "./Material.route";
+import SurveyRoute from "./Survey.route";
 
 const router: Router = Router();
 const routes = (app: Express) => {
@@ -13,7 +14,8 @@ const routes = (app: Express) => {
   router.use("/student", StudentRoute);
   router.use("/topic", TopicRoute);
   router.use("/course", CourseRoute);
-  router.use("/lesson", LessonRoute);
+  router.use("/material", MaterialRoute);
+  router.use("/survey", SurveyRoute);
 
   app.use("/api", router);
 };

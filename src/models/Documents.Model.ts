@@ -1,17 +1,16 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../configurations/database";
 import Course from "./Course.Model";
+import { triggerAsyncId } from "async_hooks";
 
-class Lesson extends Model {
+class Documents extends Model {
   public id!: number;
   public course_id!: number;
-  public inCourse!: number;
   public name!: string;
-  public description!: string;
   public context!: string;
 }
 
-Lesson.init(
+Documents.init(
   {
     id: {
       type: DataTypes.INTEGER.UNSIGNED,
@@ -28,27 +27,19 @@ Lesson.init(
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     },
-    inCourse: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
     name: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
     },
     context: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
     },
   },
-  { tableName: "lesson", sequelize, timestamps: true }
+  { sequelize, tableName: "document", timestamps: true }
 );
 
-Course.hasMany(Lesson, { foreignKey: "course_id", as: "lesson" });
-Lesson.belongsTo(Course, { foreignKey: "course_id", as: "course" });
+Course.hasMany(Documents, { foreignKey: "course_id", as: "course_document" });
+Documents.belongsTo(Course, { foreignKey: "course_id", as: "document_course" });
 
-export default Lesson;
+export default Documents;

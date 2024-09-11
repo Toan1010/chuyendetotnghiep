@@ -6,7 +6,7 @@ class Admin extends Model {
   public fullName!: string;
   public email!: string;
   public hashPassword!: string;
-  public role!: number;
+  public role!: string;
   public course_permission!: boolean;
   public student_permission!: boolean;
   public status!: boolean;

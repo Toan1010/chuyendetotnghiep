@@ -1,5 +1,6 @@
 import path from "path";
 import multer from "multer";
+import { v4 as uuidv4 } from "uuid";
 const storage = multer.memoryStorage();
 
 const avatarStorage = multer.diskStorage({
@@ -7,7 +8,8 @@ const avatarStorage = multer.diskStorage({
     cb(null, path.join(__dirname, "../../public/avatars"));
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const uniqueName = uuidv4() + path.extname(file.originalname);
+    cb(null, uniqueName);
   },
 });
 const imageStorage = multer.diskStorage({
@@ -15,7 +17,8 @@ const imageStorage = multer.diskStorage({
     cb(null, path.join(__dirname, "../../public/images"));
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const uniqueName = uuidv4() + path.extname(file.originalname);
+    cb(null, uniqueName);
   },
 });
 const documentStorage = multer.diskStorage({
@@ -23,15 +26,17 @@ const documentStorage = multer.diskStorage({
     cb(null, path.join(__dirname, "../../public/files"));
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const uniqueName = uuidv4() + path.extname(file.originalname);
+    cb(null, uniqueName);
   },
 });
 const videoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../../public/videos")); // Lưu file video trong thư mục videos
+    cb(null, path.join(__dirname, "../../public/videos")); 
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname); // Sử dụng tên file gốc
+    const uniqueName = uuidv4() + path.extname(file.originalname);
+    cb(null, uniqueName); 
   },
 });
 

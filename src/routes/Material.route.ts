@@ -1,0 +1,17 @@
+import express, { Router } from "express";
+import * as Material from "../controllers/Material.controller";
+import { verifyAccessToken, verifyCanCourse } from "../middlewares/authentication";
+
+const router: Router = express.Router();
+
+router.get("/list-lesson/:course_id", verifyAccessToken, Material.ListLesson);
+router.post("/create-lesson/:course_id", verifyCanCourse, Material.CreateLesson);
+router.put("/update-lesson/:lesson_id", verifyCanCourse, Material.UpdateLesson);
+router.delete("/delete-lesson/:lesson_id", verifyCanCourse, Material.DeleteLesson);
+
+router.get("/list-document/:course_id", verifyAccessToken, Material.ListDoc);
+router.post("/create-document/:course_id", verifyCanCourse, Material.CreateDoc);
+router.put("/update-document/:doc_id", verifyCanCourse, Material.UpdateDoc);
+router.delete("/delete-document/:doc_id", verifyCanCourse, Material.DeleteDoc);
+
+export default router;

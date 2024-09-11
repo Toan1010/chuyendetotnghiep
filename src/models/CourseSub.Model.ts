@@ -55,10 +55,10 @@ CourseSub.init(
   { tableName: "course_subcribe", sequelize, timestamps: true }
 );
 
-Course.hasMany(CourseSub, { foreignKey: "course_id", as: "course" });
-Student.hasMany(CourseSub, { foreignKey: "student_id", as: "student" });
+Course.hasMany(CourseSub, { foreignKey: "course_id", as: "subscribed_course" });
+Student.hasMany(CourseSub, { foreignKey: "student_id", as: "subscribed_student" });
 
 CourseSub.belongsTo(Course, { foreignKey: "course_id", as: "course_sub" });
-CourseSub.belongsTo(Student, { foreignKey: "student_id", as: "course_sub" });
+CourseSub.belongsTo(Student, { foreignKey: "student_id", as: "student_sub" });
 
 export default CourseSub;

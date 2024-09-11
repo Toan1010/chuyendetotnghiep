@@ -4,7 +4,7 @@ import env from "./environment";
 const sequelize = new Sequelize(env.db_name, env.db_user, env.db_password, {
   host: env.db_host,
   port: env.db_port,
-  dialect: "mysql"
+  dialect: "mysql",
 });
 
 async function authenticateDatabase() {
@@ -19,7 +19,7 @@ async function authenticateDatabase() {
 
 async function syncDatabase() {
   try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     console.log("All models were synchronized successfully.");
   } catch (err) {
     console.error("An error occurred while synchronizing the models:", err);

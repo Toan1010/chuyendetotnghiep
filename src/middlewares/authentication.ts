@@ -10,16 +10,19 @@ export const verifyAccessToken = async (
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ error: "Token không tồn tại !" });
+      return res.status(401).json("Token không tồn tại !");
     }
     const user = await tokenVerify(token, "access");
     if (!user) {
-      return res.status(403).json({ error: "Token bị lỗi!" });
+      return res.status(403).json("Token bị lỗi!");
     }
     (req as any).user = user;
     next();
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    if (error.message === "jwt expired") {
+      return res.status(401).json("Token hết hạn!");
+    }
+    res.status(500).json(error.message);
   }
 };
 
@@ -33,22 +36,22 @@ const verifyPermission = async (
     await verifyAccessToken(req, res, async () => {
       const user = (req as any).user;
       if (user.role === 0) {
-        return res.status(401).json({
-          error: "Đăng nhập với vai trò là Admin để sử dụng chức năng này!",
-        });
+        return res
+          .status(401)
+          .json("Đăng nhập với vai trò là Admin để sử dụng chức năng này!");
       }
       if (user.role === 1) {
         const hasPermission = await permissionCheck(user.id);
         if (!hasPermission) {
-          return res.status(401).json({
-            error: "Không được phân quyền để thực hiện nhiệm vụ này!",
-          });
+          return res
+            .status(401)
+            .json("Không được phân quyền để thực hiện nhiệm vụ này!");
         }
       }
       next();
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -63,13 +66,13 @@ export const verifyStudent = async (
       if (user && user.role === 0) {
         return next();
       } else {
-        return res.status(403).json({
-          message: "Không được cấp quyền để thực hiện hành động này!",
-        });
+        return res
+          .status(403)
+          .json("Không được cấp quyền để thực hiện hành động này!");
       }
     });
   } catch (error: any) {
-    return res.json({ error: error.message });
+    return res.json(error.message);
   }
 };
 
@@ -83,7 +86,7 @@ export const veriyAdmin = async (
     if (user.role == 0) {
       return res
         .status(403)
-        .json({ error: "Không được cấp quyền để thực hiện hành động này!" });
+        .json("Không được cấp quyền để thực hiện hành động này!");
     }
     return next();
   });
@@ -114,13 +117,13 @@ export const verifySupadmin = async (
     await verifyAccessToken(req, res, async () => {
       const user = (req as any).user;
       if (user.role !== 2) {
-        return res.status(401).json({
-          error: "Bạn không được cấp phép để thực hiện hành động này",
-        });
+        return res
+          .status(401)
+          .json("Bạn không được cấp phép để thực hiện hành động này");
       }
       next();
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };

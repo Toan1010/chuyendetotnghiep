@@ -5,6 +5,7 @@ class Topic extends Model {
   public id!: number;
   public name!: string;
   public description!: string;
+  public slug!: string;
 }
 
 Topic.init(
@@ -15,6 +16,11 @@ Topic.init(
       primaryKey: true,
     },
     name: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
+    },
+    slug: {
       type: DataTypes.STRING(255),
       allowNull: false,
       unique: true,

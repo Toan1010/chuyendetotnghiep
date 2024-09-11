@@ -1,54 +1,59 @@
 import { Request, Response } from "express";
-import { addTopic, isExist, listTopic } from "../services/Topic.service";
+import Topic from "../models/Topic.Model";
+import { convertString } from "../helpers/convertToSlug";
 
 export const GetListTopic = async (req: Request, res: Response) => {
   try {
-    const result = await listTopic();
-    return res.json({ ...result });
+    const { count, rows: topics } = await Topic.findAndCountAll({
+      attributes: ["id", "name", "slug"],
+    });
+    return res.json({ count, topics });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
 export const CreateTopic = async (req: Request, res: Response) => {
   try {
     const { name, description } = req.body;
-    const topic = await isExist(undefined, name);
+    const topic = await Topic.findOne({ where: { name } });
     if (topic) {
-      return res.status(409).json({ error: "Topic đã tồn tại!" });
+      return res.status(409).json("Topic đã tồn tại!");
     }
-    await addTopic(name, description);
-    return res.json({ message: "Tạo mới topic thành công!" });
+    const slug = convertString(name);
+    await Topic.create({ name, slug, description });
+    return res.json("Tạo mới topic thành công!");
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
 export const UpdateTopic = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const { name, description } = req.body;
-    const topic = await isExist(parseInt(id));
+    const topic = await Topic.findByPk(parseInt(id));
     if (!topic) {
-      return res.status(404).json({ error: "Topic không tồn tại !" });
+      return res.status(404).json("Topic không tồn tại !");
     }
-    await topic.update({ name, description });
-    return res.json({ message: "Cập nhật topic thành công!" });
+    const { name = topic.name, description = topic.description } = req.body;
+    const slug = convertString(name);
+    await topic.update({ name, slug, description });
+    return res.json("Cập nhật topic thành công!");
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
 export const DeleteTopic = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const topic = await isExist(parseInt(id));
+    const topic = await Topic.findByPk(parseInt(id));
     if (!topic) {
-      return res.status(404).json({ error: "Topic không tồn tại !" });
+      return res.status(404).json("Topic không tồn tại !");
     }
     await topic.destroy();
-    return res.json({ message: "Xoá topic thành công!" });
+    return res.json("Xoá topic thành công!");
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };

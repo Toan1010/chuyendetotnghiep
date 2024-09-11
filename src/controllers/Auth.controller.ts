@@ -15,14 +15,14 @@ export const LoginStudent = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const isExist = await Student.findOne({ where: { email } });
     if (!isExist) {
-      return res.status(404).json({ error: "Thông tin Email chưa chính xác!" });
+      return res.status(404).json("Thông tin Email chưa chính xác!");
     }
     const isPassword = await bcryptDecrypt(password, isExist.hashPassword);
     if (!isPassword) {
-      return res.status(400).json({ error: "Mật khẩu không đúng" });
+      return res.status(400).json("Mật khẩu không đúng");
     }
     if (!isExist.status) {
-      return res.status(403).json({ error: "Tài khoản của bạn đang bị khóa!" });
+      return res.status(403).json("Tài khoản của bạn đang bị khóa!");
     }
     let tokenData = { id: isExist.id, role: 0 };
 
@@ -32,7 +32,7 @@ export const LoginStudent = async (req: Request, res: Response) => {
 
     return res.json({ accessToken, refreshToken });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -42,19 +42,15 @@ export const LoginAdmin = async (req: Request, res: Response) => {
       const { email, password } = req.body;
       const isExist = await Admin.findOne({ where: { email } });
       if (!isExist) {
-        return res
-          .status(404)
-          .json({ error: "Thông tin Email chưa chính xác!" });
+        return res.status(404).json("Thông tin Email chưa chính xác!");
       }
       const isPassword = await bcryptDecrypt(password, isExist.hashPassword);
       if (!isPassword) {
-        return res.status(400).json({ error: "Mật khẩu không đúng" });
+        return res.status(400).json("Mật khẩu không đúng");
       }
 
       if (!isExist.status) {
-        return res
-          .status(403)
-          .json({ error: "Tài khoản của bạn đang bị khóa!" });
+        return res.status(403).json("Tài khoản của bạn đang bị khóa!");
       }
       let tokenData = { id: isExist.id, role: roleMap[isExist.role] };
 
@@ -64,10 +60,10 @@ export const LoginAdmin = async (req: Request, res: Response) => {
 
       return res.json({ accessToken, refreshToken });
     } catch (error: any) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json(error.message);
     }
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -76,7 +72,7 @@ export const RefreshToken = async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
 
     if (!refreshTokenlist.includes(refreshToken)) {
-      return res.status(403).json({ error: "Refresh token không hợp lệ" });
+      return res.status(403).json("Refresh token không hợp lệ");
     }
     const data = await tokenVerify(refreshToken, "refresh");
     if (data && typeof data === "object") {
@@ -91,10 +87,10 @@ export const RefreshToken = async (req: Request, res: Response) => {
         refreshToken: newRefreshToken,
       });
     } else {
-      return res.status(403).json({ error: "Dữ liệu token không hợp lệ" });
+      return res.status(403).json("Dữ liệu token không hợp lệ");
     }
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -106,11 +102,11 @@ export const Logout = async (req: Request, res: Response) => {
       refreshTokenlist = refreshTokenlist.filter(
         (token) => token !== refreshToken
       );
-      return res.status(200).json({ message: "Logged out successfully!" });
+      return res.status(200).json("Logged out successfully!");
     } else {
-      return res.status(403).json({ message: "Refresh Token không hợp lệ!" });
+      return res.status(403).json("Refresh Token không hợp lệ!");
     }
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json(error.message);
   }
 };
