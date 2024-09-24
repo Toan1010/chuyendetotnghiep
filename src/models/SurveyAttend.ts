@@ -7,6 +7,7 @@ class SurveyAttend extends Model {
   public id!: number;
   public survey_id!: number;
   public student_id!: number;
+  public detail!: object;
 }
 
 SurveyAttend.init(
@@ -35,6 +36,9 @@ SurveyAttend.init(
       },
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
+    },
+    detail: {
+      type: DataTypes.JSON, 
     },
   },
   { sequelize, timestamps: true, tableName: "survey_attend" }

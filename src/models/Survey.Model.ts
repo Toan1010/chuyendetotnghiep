@@ -4,9 +4,7 @@ import Topic from "./Topic.Model";
 
 class Survey extends Model {
   public id!: number;
-  public topic_id!: number;
   public name!: string;
-  public description!: string;
   public slug!: string;
   public dueAt!: Date;
 }
@@ -18,23 +16,10 @@ Survey.init(
       primaryKey: true,
       autoIncrement: true,
     },
-    topic_id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      references: {
-        model: Topic,
-        key: "id",
-      },
-      allowNull: true,
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
-    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
-    },
-    description: {
-      type: DataTypes.TEXT,
     },
     slug: {
       type: DataTypes.STRING,

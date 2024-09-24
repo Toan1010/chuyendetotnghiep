@@ -32,11 +32,11 @@ const documentStorage = multer.diskStorage({
 });
 const videoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../../public/videos")); 
+    cb(null, path.join(__dirname, "../../public/videos"));
   },
   filename: (req, file, cb) => {
     const uniqueName = uuidv4() + path.extname(file.originalname);
-    cb(null, uniqueName); 
+    cb(null, uniqueName);
   },
 });
 
@@ -76,25 +76,6 @@ export const imageUpload = multer({
 
 export const documentUpload = multer({
   storage: documentStorage,
-  fileFilter: function (req, file, cb) {
-    if (
-      file.mimetype === "application/msword" ||
-      file.mimetype ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      file.mimetype === "application/vnd.ms-excel" ||
-      file.mimetype ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      file.mimetype === "application/pdf"
-    ) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Chỉ được phép upload file có định dạng .doc, .docx, .xls, .xlsx, hoặc .pdf"
-        )
-      );
-    }
-  },
 });
 
 export const videoUpload = multer({

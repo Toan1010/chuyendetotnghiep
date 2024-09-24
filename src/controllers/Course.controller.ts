@@ -1,12 +1,19 @@
 import { Request, Response } from "express";
+
 import multer from "multer";
+import path from "path";
+import fs from "fs/promises";
 import { imageUpload } from "../configurations/multer";
+
 import { convertString } from "../helpers/convertToSlug";
 import Topic from "../models/Topic.Model";
 import Course from "../models/Course.Model";
-import CourseSub from "../models/CourseSub.Model";
-import { Op } from "sequelize";
 import Student from "../models/Student.Model";
+import CourseSub from "../models/CourseSub.Model";
+
+import { Op, fn, col } from "sequelize";
+import Lesson from "../models/Lesson.Model";
+import { changeTime } from "../helpers/formatTime";
 
 export const GetListCourse = async (req: Request, res: Response) => {
   try {
@@ -34,18 +41,25 @@ export const GetListCourse = async (req: Request, res: Response) => {
       ],
       raw: true,
     });
+
     const coursesWithStudentCount = await Promise.all(
       courses.map(async (course: any) => {
+        let { createdAt, ...rest } = course;
+        createdAt = changeTime(createdAt);
         const studentCount = await CourseSub.count({
           where: { course_id: course.id },
         });
         return {
-          ...course,
+          ...rest,
+          createdAt,
           studentCount,
         };
       })
     );
-    return res.json({ count, courses: coursesWithStudentCount });
+    return res.json({
+      count,
+      courses: coursesWithStudentCount,
+    });
   } catch (error: any) {
     return res.json(error.message);
   }
@@ -58,7 +72,7 @@ export const CreateCourse = async (req: Request, res: Response) => {
     } else if (err) {
       return res.status(400).json(err.message);
     }
-    const thumbnail = req.file?.originalname || "course.png";
+    const thumbnail = req.file?.filename || "course.png";
     try {
       const { name, description, topic_id, type } = req.body;
       const exist = await Course.findOne({ where: { name } });
@@ -93,7 +107,12 @@ export const UpdateCourse = async (req: Request, res: Response) => {
     if (!course) {
       return res.status(404).json("Khóa học không tồn tại!");
     }
-    const thumbnail = req.file?.originalname || course.thumbnail;
+    const oldthumbnailPath = path.join(
+      __dirname,
+      "../../public/images",
+      course.thumbnail
+    );
+    const thumbnail = req.file?.filename || course.thumbnail;
     try {
       const {
         name = course.name,
@@ -110,6 +129,13 @@ export const UpdateCourse = async (req: Request, res: Response) => {
         thumbnail,
         slug,
       });
+      if (req.file?.filename) {
+        try {
+          await fs.unlink(oldthumbnailPath);
+        } catch (error: any) {
+          console.error("Failed to delete old thumbnail:", error.message);
+        }
+      }
       return res.json("Cập nhật thông tin khóa học thành công!");
     } catch (error: any) {
       return res.json(error.message);
@@ -139,7 +165,6 @@ export const AddToCourse = async (req: Request, res: Response) => {
       return res.status(404).json("Khóa học không tồn tại !");
     }
     const { list_student }: { list_student: number[] } = req.body;
-    // return res.json(list_student)
 
     await Promise.all(
       list_student.map(async (studentId) => {
@@ -179,10 +204,97 @@ export const DetailCourse = async (req: Request, res: Response) => {
       include: [{ model: Topic, as: "topic", attributes: ["name"] }],
       raw: true,
     });
+    const user = (req as any).user;
     if (!course) {
-      return res.json(404).json({ error: "Khóa học không tồn tại!" });
+      return res.status(404).json("Khóa học không tồn tại!");
     }
-    return res.json({ course });
+    const countStudent = await CourseSub.count({
+      where: { course_id: course.id },
+    });
+    const totalLesson = await Lesson.count({ where: { course_id: course.id } });
+    // const result = await CourseSub.findOne({
+    //   attributes: [[fn("AVG", col("rate")), "averageRate"]],
+    //   where: { course_id: course.id },
+    // });
+    let data: any = { ...course, countStudent, totalLesson };
+    if (user.role == 0) {
+      const subscribe = await CourseSub.findOne({
+        where: { course_id: course.id, student_id: user.id },
+        attributes: ["process", "rate"],
+      });
+      data.process = subscribe?.process;
+    }
+    return res.json(data);
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const CourseRegister = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const slug = req.params.course_slug;
+    const course = await Course.findOne({ where: { slug } });
+    if (!course) {
+      return res.status(404).json("Khóa học không tồn tại!");
+    }
+    if (course.type) {
+      return res
+        .status(401)
+        .json("Khóa học này cần phải được admin cấp quyền!");
+    }
+    await CourseSub.create({ student_id: user.id, course_id: course.id });
+    return res.json("Đăng ký khóa học thành công!");
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const WriteReview = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const slug = req.params.course_slug;
+    const { rate, comment } = req.body;
+
+    const course = await Course.findOne({ where: { slug } });
+    if (!course) {
+      return res.status(404).json("Khoa hoc khong ton tai!");
+    }
+    const sub = await CourseSub.findOne({
+      where: { course_id: course.id, student_id: user.id },
+    });
+    if (!sub) {
+      return res.status(401).json("Ban can phai hoc truoc khi danh gia!");
+    }
+    await sub.update({ rate, comment });
+    return res.json("Danh gia khoa hoc thanh cong!");
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const CourseReview = async (req: Request, res: Response) => {
+  try {
+    const slug = req.params.course_slug;
+    const course = await Course.findOne({ where: { slug } });
+    const user = (req as any).user;
+    if (!course) {
+      return res.status(404).json("Kho hojc khong ton tai!");
+    }
+    const { count, rows: reviews } = await CourseSub.findAndCountAll({
+      where: { course_id: course.id, rate: { [Op.ne]: null } },
+      attributes: ["rate", "comment"],
+      order: [["rate", "ASC"]],
+    });
+    let data: any = { count, reviews };
+    if (user.role == 0) {
+      const sub = await CourseSub.findOne({
+        attributes: ["id", "rate", "comment"],
+        where: { course_id: course.id, student_id: user.id },
+      });
+      data.my_review = sub;
+    }
+    return res.json(data);
   } catch (error: any) {
     return res.status(500).json(error.message);
   }

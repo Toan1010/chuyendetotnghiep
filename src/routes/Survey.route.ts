@@ -15,8 +15,6 @@ router.post("/attend/:survey_id", verifyStudent, Survey.TakeSurvey);
 
 router.post("/create/", verifySupadmin, Survey.CreateSurvey);
 router.put("/update/:id", verifySupadmin, Survey.UpdateSurvey);
-router.put("/update/question/:id", verifySupadmin, Survey.UpdateSurvey);
-router.delete("/delete/question/:id", verifySupadmin, Survey.DeleteSurvey);
 router.delete("/delete/:id", verifySupadmin, Survey.DeleteSurvey);
 
 export default router;

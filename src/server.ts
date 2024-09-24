@@ -6,6 +6,7 @@ import routes from "./routes/index.route";
 import env from "./configurations/environment";
 import { responseFormatter } from "./middlewares/formatResponse";
 import { authenticateDatabase, syncDatabase } from "./configurations/database";
+import { redisConnection } from "./configurations/redis.connection";
 
 const app = express();
 const port = env.port;
@@ -22,6 +23,7 @@ const startServer = async () => {
   try {
     await authenticateDatabase();
     await syncDatabase();
+    await redisConnection();
     app.listen(port, "0.0.0.0", () => {
       console.log(`Server is running on port ${port}`);
       console.log(`http://localhost:${port}`);

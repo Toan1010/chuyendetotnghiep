@@ -44,7 +44,7 @@ export const CreateStudent = async (req: Request, res: Response) => {
     } else if (err) {
       return res.status(400).json({ message: err.message });
     }
-    const avatar = req.file?.originalname || "avatar.png";
+    const avatar = req.file?.filename || "avatar.png";
     try {
       const { fullName, email, password } = req.body;
       const exist = await Student.findOne({ where: { email } });

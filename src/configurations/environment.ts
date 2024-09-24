@@ -17,6 +17,9 @@ const environment = {
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
   cloud_key: process.env.CLOUDINARY_API_KEY || "",
   cloud_secret: process.env.CLOUDINARY_API_SECRET || "",
+  redis_port: process.env.REDIS_PORT,
+  redis_host: process.env.REDIS_HOST,
+  redis_password: process.env.REDIS_PASSWORD,
 };
 
 export default environment;
