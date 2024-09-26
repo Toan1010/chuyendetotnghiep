@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { addQuestion, createSurvey } from "../services/Survey.service";
+import { addQuestion } from "../services/Survey.service";
 import Survey from "../models/Survey.Model";
 import SurveyQuestion from "../models/SurveyQuestion.Model";
-import { Op, where } from "sequelize";
+import { Op} from "sequelize";
 import SurveyAttend from "../models/SurveyAttend";
 import { convertString } from "../helpers/convertToSlug";
 

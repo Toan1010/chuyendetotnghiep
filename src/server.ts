@@ -23,7 +23,7 @@ const startServer = async () => {
   try {
     await authenticateDatabase();
     await syncDatabase();
-    await redisConnection();
+    // await redisConnection();
     app.listen(port, "0.0.0.0", () => {
       console.log(`Server is running on port ${port}`);
       console.log(`http://localhost:${port}`);

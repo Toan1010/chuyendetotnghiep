@@ -6,6 +6,7 @@ import TopicRoute from "./Topic.route";
 import CourseRoute from "./Course.route";
 import MaterialRoute from "./Material.route";
 import SurveyRoute from "./Survey.route";
+import ExamRoute from "./Exam.route";
 
 const router: Router = Router();
 const routes = (app: Express) => {
@@ -16,6 +17,7 @@ const routes = (app: Express) => {
   router.use("/course", CourseRoute);
   router.use("/material", MaterialRoute);
   router.use("/survey", SurveyRoute);
+  router.use("/exam", ExamRoute);
 
   app.use("/api", router);
 };

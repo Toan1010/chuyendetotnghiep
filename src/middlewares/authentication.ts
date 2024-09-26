@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { tokenVerify } from "../helpers/tokenHandle";
-import { coursePermission, studentPermission } from "../services/Admin.service";
+import {
+  coursePermission,
+  examPermission,
+  studentPermission,
+} from "../services/Admin.service";
 
 export const verifyAccessToken = async (
   req: Request,
@@ -106,6 +110,14 @@ export const verifyCanStudent = async (
   next: NextFunction
 ) => {
   return verifyPermission(req, res, next, studentPermission);
+};
+
+export const verifyCanExam = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  return verifyPermission(req, res, next, examPermission);
 };
 
 export const verifySupadmin = async (

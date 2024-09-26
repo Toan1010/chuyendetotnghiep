@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { isExist, updateAdmin, addAdmin } from "../services/Admin.service";
 import { decryptString, encryptString } from "../helpers/cryptHash";
 import { sendResetEmail } from "../helpers/sendingEmail";
 import { bcryptDecrypt, bcryptEncrypt } from "../helpers/bcryptHash";
@@ -30,6 +29,7 @@ export const GetListAdmin = async (req: Request, res: Response) => {
         "role",
         "course_permission",
         "student_permission",
+        "exam_permission",
         "status",
       ],
       order: [["id", orderDirection]],
@@ -94,6 +94,7 @@ export const CreateAdmin = async (req: Request, res: Response) => {
       password,
       course_permission = 0,
       student_permission = 0,
+      exam_permission = 0,
     } = req.body;
     const exist = await Admin.findOne({ where: { email } });
     if (exist) {
@@ -106,6 +107,7 @@ export const CreateAdmin = async (req: Request, res: Response) => {
       hashPassword,
       course_permission,
       student_permission,
+      exam_permission,
       role: "normal_admin",
     });
     return res.json("Tạo tài khoản thành công!");
@@ -131,13 +133,21 @@ export const UpdateStatus = async (req: Request, res: Response) => {
 
 export const UpdatePermission = async (req: Request, res: Response) => {
   try {
-    const { course_permission = 0, student_permission = 0 } = req.body;
+    const {
+      course_permission = 0,
+      student_permission = 0,
+      exam_permission = 0,
+    } = req.body;
     const id = req.params.id;
     const admin = await Admin.findByPk(parseInt(id));
     if (!admin) {
       return res.status(404).json("Không tìm thấy admin!");
     }
-    await admin.update({ course_permission, student_permission });
+    await admin.update({
+      course_permission,
+      student_permission,
+      exam_permission,
+    });
     return res.json("Đã cập nhật quyền cho admin!");
   } catch (error: any) {
     return res.status(500).json(error.message);

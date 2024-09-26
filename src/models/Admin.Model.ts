@@ -9,6 +9,7 @@ class Admin extends Model {
   public role!: string;
   public course_permission!: boolean;
   public student_permission!: boolean;
+  public exam_permission!: boolean;
   public status!: boolean;
 }
 
@@ -42,6 +43,10 @@ Admin.init(
       defaultValue: 0,
     },
     student_permission: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: 0,
+    },
+    exam_permission: {
       type: DataTypes.BOOLEAN,
       defaultValue: 0,
     },
