@@ -5,8 +5,11 @@ import ExamQuestion from "../models/ExamQuestion.Model";
 
 import { uploadExcell } from "../configurations/multer";
 import XLSX from "xlsx";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import ExamResult from "../models/ExamResult.Model";
+import { changeTime } from "../helpers/formatTime";
+import Student from "../models/Student.Model";
+import sequelize from "../configurations/database";
 
 export const ListExam = async (req: Request, res: Response) => {
   try {
@@ -77,20 +80,28 @@ export const ListStudentAttend = async (req: Request, res: Response) => {
     if (!exam) {
       return res.status(404).json("Exam khong ton taji");
     }
-    let { limit, page, key_name = "" } = req.body;
+    let { limit = 10, page = 1 } = req.query;
     page = parseInt(page as string);
     limit = parseInt(limit as string);
     const offset = (page - 1) * limit;
-    const whereCondition: any = {
-      exam_id,
-      // [Op.or]: [{ fullName: { [Op.like]: `%${key_name}%` } }],
-    };
 
     const { count, rows: students } = await ExamResult.findAndCountAll({
-      where: whereCondition,
+      limit,
+      offset,
+      attributes: [
+        "student_id",
+        [Sequelize.fn("COUNT", Sequelize.col("student_id")), "attempt_count"],
+        [Sequelize.fn("MAX", Sequelize.col("correctAns")), "highest_score"],
+      ],
+      where: { exam_id },
+      include: [
+        { model: Student, as: "student_result", attributes: ["fullName"] },
+      ],
+      group: ["student_id"],
+      raw: true,
     });
 
-    return res.json({ count, students });
+    return res.json({ count: count.length, students });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
@@ -99,22 +110,66 @@ export const ListStudentAttend = async (req: Request, res: Response) => {
 export const AllExamResult = async (req: Request, res: Response) => {
   try {
     const exam_id = req.params.exam_id;
+    const { student_id } = req.query;
     const exam = await Exam.findByPk(exam_id);
     if (!exam) {
       return res.status(404).json("Exam khong ton taji");
     }
     const user = (req as any).user;
-    // if()
+    let whereCondition: any = {
+      exam_id,
+    };
+    if (user.role !== 0) {
+      if (!student_id) {
+        return res.json("Chọn id sinh viên muốn xem kết quả");
+      }
+      whereCondition.student_id = student_id;
+    }
+    if (user.role === 0) {
+      whereCondition.student_id = user.id;
+    }
     const { count, rows: results } = await ExamResult.findAndCountAll({
-      where: { exam_id },
+      where: whereCondition,
+      attributes: ["id", "correctAns", "createdAt", "submitAt"],
+      order: [["createdAt", "DESC"]],
     });
-    return res.json({ count, results });
+
+    const formatDate = results.map((result) => {
+      let { createdAt, submitAt, ...rest } = result.get({
+        plain: true,
+      });
+
+      createdAt = changeTime(createdAt);
+      submitAt = changeTime(submitAt);
+      return { ...rest, createdAt, submitAt };
+    });
+    return res.json({ count, results: formatDate });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
 };
 
-export const DetailResult = async (req: Request, res: Response) => {};
+export const DetailResultExam = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const result_id = req.params.result_id;
+    const result = await ExamResult.findByPk(result_id, { raw: true });
+    if (!result) {
+      return res.status(404).json("Bai lam khong ton tai");
+    }
+    if (user.role === 0 && result?.student_id !== user.id) {
+      return res.status(403).json("Bai lam khong phai cua ban!");
+    }
+    let { detailResult, ...rest } = result;
+    detailResult =
+      typeof detailResult === "string"
+        ? JSON.parse(detailResult)
+        : detailResult;
+    return res.json({ detailResult, ...rest });
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
 
 export const DetailExam = async (req: Request, res: Response) => {
   try {

@@ -80,7 +80,7 @@ export const verifyStudent = async (
   }
 };
 
-export const veriyAdmin = async (
+export const verifyAdmin = async (
   req: Request,
   res: Response,
   next: NextFunction

@@ -3,7 +3,7 @@ import * as Student from "../controllers/Student.controller";
 import {
   verifyCanStudent,
   verifyStudent,
-  veriyAdmin,
+  verifyAdmin,
 } from "../middlewares/authentication";
 
 const router: Router = express.Router();
@@ -11,7 +11,7 @@ const router: Router = express.Router();
 router.post("/forgot_password/", Student.ForgotPassword);
 router.post("/forgot_password/:id/", Student.ResetPassword);
 
-router.get("/list/", veriyAdmin, Student.GetListStudent);
+router.get("/list/", verifyAdmin, Student.GetListStudent);
 router.post("/create/", verifyCanStudent, Student.CreateStudent);
 router.post("/create/bulk/", verifyCanStudent, Student.CreateStudentBulk);
 router.put("/change_status/:student_id", verifyCanStudent, Student.ChangeStatus);
