@@ -18,7 +18,7 @@ export const verifyAccessToken = async (
     }
     const user = await tokenVerify(token, "access");
     if (!user) {
-      return res.status(403).json("Token bị lỗi!");
+      return res.status(401).json("Token bị lỗi!");
     }
     (req as any).user = user;
     next();

@@ -5,11 +5,12 @@ import ExamQuestion from "../models/ExamQuestion.Model";
 
 import { uploadExcell } from "../configurations/multer";
 import XLSX from "xlsx";
-import { Op, Sequelize } from "sequelize";
+import { Op, Sequelize, where } from "sequelize";
 import ExamResult from "../models/ExamResult.Model";
 import { changeTime } from "../helpers/formatTime";
 import Student from "../models/Student.Model";
-import sequelize from "../configurations/database";
+import CourseSub from "../models/CourseSub.Model";
+import _ from "lodash";
 
 export const ListExam = async (req: Request, res: Response) => {
   try {
@@ -409,6 +410,110 @@ export const DeleteQuestion = async (req: Request, res: Response) => {
     await question.destroy();
     return res.json("Xoa cau hoi thanh cong");
   } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const AttendExam = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const exam_id = req.params.exam_id;
+    const exam = await Exam.findByPk(exam_id);
+    if (!exam) {
+      return res.status(404).json("Exam khong ton taji");
+    }
+    const sub = await CourseSub.findOne({
+      where: { student_id: user.id, course_id: exam.course_id },
+      raw: true,
+    });
+    if (!sub) {
+      return res.status(403).json("Ban chua dang ky khoa hoc nay!");
+    }
+    const countDoing = await ExamResult.count({
+      where: {
+        exam_id: exam.id,
+        student_id: user.id,
+      },
+    });
+    if (exam.reDoTime > 0 && countDoing >= exam.reDoTime) {
+      return res.status(403).json("Ban da het luot lam lai bai thi nay!");
+    }
+    const questions = await ExamQuestion.findAll({
+      order: Sequelize.literal("RAND()"),
+      limit: exam.numberQuestion,
+      where: { exam_id },
+      attributes: ["id", "name", "type", "choice", "correctAns"],
+      raw: true,
+    });
+    const saveQuestion = questions.map((question: any) => {
+      let { choice, correctAns, ...rest } = question;
+      choice = choice =
+        typeof choice === "string" ? JSON.parse(choice) : choice;
+      correctAns = correctAns =
+        typeof correctAns === "string" ? JSON.parse(correctAns) : correctAns;
+      let answer: string[] = [];
+      return { ...rest, choice, correctAns, answer };
+    });
+    const dataQuestion = questions.map((question: any) => {
+      let { choice, correctAns, ...rest } = question;
+      choice = choice =
+        typeof choice === "string" ? JSON.parse(choice) : choice;
+      return { ...rest, choice };
+    });
+
+    const subimt = await ExamResult.create({
+      student_id: user.id,
+      exam_id: exam.id,
+      detailResult: saveQuestion,
+    });
+    return res.json({ test: subimt.id, dataQuestion });
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const SubmitExam = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const result_id = req.params.result_id;
+    const result = await ExamResult.findOne({
+      where: {
+        id: result_id,
+        student_id: user.id,
+      },
+    });
+    if (!result) {
+      return res
+        .status(400)
+        .json("Bai lam khong ton tai hoac khong phai cua ban!");
+    }
+    if (result.submitAt) {
+      return res.status(403).json("Bai lam da duoc nopj");
+    }
+    const { answers } = req.body;
+    let score = 0;
+    let checks =
+      typeof result.detailResult === "string"
+        ? JSON.parse(result.detailResult)
+        : result.detailResult;
+    const newDetail: any = checks.map((check: any, index: number) => {
+      let { answer, correctAnswer, ...rest } = check;
+      let userAns = answers[index]?.selectedAns;
+      if (userAns) {
+        const isTrue = _.difference(userAns, correctAnswer);
+        score += isTrue ? 1 : 0;
+      }
+      answer = userAns ? userAns : [];
+      return { answer, correctAnswer, ...rest };
+    });
+    await result.update({
+      correctAns: score,
+      detailResult: newDetail,
+      submitAt: Date.now(),
+    });
+    return res.json({ result });
+  } catch (error: any) {
+    console.log(error);
     return res.status(500).json(error.message);
   }
 };

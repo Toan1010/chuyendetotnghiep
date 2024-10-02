@@ -17,8 +17,8 @@ router.get("/list-student/:exam_id", verifyAdmin, ExamController.ListStudentAtte
 router.get("/list-attend/:exam_id",verifyAccessToken , ExamController.AllExamResult);//v
 router.get("/detail-result/:result_id",verifyAccessToken, ExamController.DetailResultExam);//v
 // wait
-router.post("/attend/:exam_id", verifyStudent);
-router.post("/submit/:exam_id", verifyStudent);
+router.get("/attend/:exam_id", verifyStudent, ExamController.AttendExam);
+router.post("/submit/:result_id", verifyStudent, ExamController.SubmitExam);
 //check done
 router.get("/detail/:exam_id",verifyAccessToken, ExamController.DetailExam);
 router.post("/create/:course_id", verifyCanExam,ExamController.CreateExam);
