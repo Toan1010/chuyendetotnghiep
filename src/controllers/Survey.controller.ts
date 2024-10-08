@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { addQuestion } from "../services/Survey.service";
 import Survey from "../models/Survey.Model";
 import SurveyQuestion from "../models/SurveyQuestion.Model";
-import { Op} from "sequelize";
+import { Op } from "sequelize";
 import SurveyAttend from "../models/SurveyAttend";
 import { convertString } from "../helpers/convertToSlug";
 
@@ -137,6 +137,17 @@ export const DeleteSurvey = async (req: Request, res: Response) => {
     }
     await survey.destroy();
     return res.json("Khao sat duoc xoa thanh cong!");
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const HaveAttended = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const { count, rows: surveys } = await Survey.findAndCountAll({
+      attributes: [],
+    });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }

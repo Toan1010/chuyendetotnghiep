@@ -8,7 +8,8 @@ import {
 
 const router: Router = express.Router();
 
-router.get("/list/", verifyAccessToken, Survey.GetListSurvey);
+router.get("/list/", Survey.GetListSurvey);
+router.get("/have-attended/", verifyStudent, Survey.HaveAttended);
 router.get("/:slug/", verifyAccessToken, Survey.DetailSurvey);
 
 router.post("/attend/:survey_id", verifyStudent, Survey.TakeSurvey);

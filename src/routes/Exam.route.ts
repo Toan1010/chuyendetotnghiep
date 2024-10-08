@@ -10,7 +10,7 @@ import * as ExamController from "../controllers/Exam.controller";
 
 const router: Router = express.Router();
 
-router.get("/list/",ExamController.ListExam);//v
+router.get("/list/", ExamController.ListExam);//v
 router.get("/list-question/:exam_id", verifyCanExam, ExamController.AllQuestionOnExam);//v
 router.get("/list-student/:exam_id", verifyAdmin, ExamController.ListStudentAttend);
 

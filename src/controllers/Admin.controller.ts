@@ -161,8 +161,10 @@ export const MyInfo = async (req: Request, res: Response) => {
       attributes: [
         "fullName",
         "email",
+        "role",
         "course_permission",
         "student_permission",
+        "exam_permission",
       ],
     });
     const adminData = admin ? admin.get({ plain: true }) : null;

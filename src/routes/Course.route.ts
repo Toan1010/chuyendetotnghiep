@@ -8,7 +8,8 @@ import {
 
 const router: Router = express.Router();
 
-router.get("/list/", verifyAccessToken, Course.GetListCourse);
+router.get("/list/", Course.GetListCourse);
+router.get("/my-course/", verifyStudent, Course.MyCourse);
 router.get("/:slug", verifyAccessToken, Course.DetailCourse);
 
 router.post("/create/", verifyCanCourse, Course.CreateCourse);

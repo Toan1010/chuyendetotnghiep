@@ -11,7 +11,7 @@ import Course from "../models/Course.Model";
 import Student from "../models/Student.Model";
 import CourseSub from "../models/CourseSub.Model";
 
-import { Op, fn, col } from "sequelize";
+import { col, fn, Op } from "sequelize";
 import Lesson from "../models/Lesson.Model";
 import { changeTime } from "../helpers/formatTime";
 
@@ -44,13 +44,14 @@ export const GetListCourse = async (req: Request, res: Response) => {
 
     const coursesWithStudentCount = await Promise.all(
       courses.map(async (course: any) => {
-        let { createdAt, ...rest } = course;
+        let { createdAt, "topic.name": topic, ...rest } = course;
         createdAt = changeTime(createdAt);
         const studentCount = await CourseSub.count({
           where: { course_id: course.id },
         });
         return {
           ...rest,
+          topic,
           createdAt,
           studentCount,
         };
@@ -278,23 +279,121 @@ export const CourseReview = async (req: Request, res: Response) => {
     const slug = req.params.course_slug;
     const course = await Course.findOne({ where: { slug } });
     const user = (req as any).user;
+
     if (!course) {
-      return res.status(404).json("Kho hojc khong ton tai!");
+      return res.status(404).json("Khóa học không tồn tại!");
     }
+
+    // Lấy các đánh giá và bao gồm tên sinh viên
     const { count, rows: reviews } = await CourseSub.findAndCountAll({
-      where: { course_id: course.id, rate: { [Op.ne]: null } },
-      attributes: ["rate", "comment"],
-      order: [["rate", "ASC"]],
+      where: {
+        course_id: course.id,
+        rate: { [Op.ne]: null },
+        comment: { [Op.ne]: null },
+      },
+      attributes: ["rate", "comment", "createdAt"],
+      include: [
+        {
+          model: Student,
+          as: "student_sub",
+          attributes: ["fullName"],
+        },
+      ],
+      order: [["rate", "DESC"]],
+      raw: true, // Chuyển kết quả thành plain object để tránh cấu trúc tuần hoàn
     });
-    let data: any = { count, reviews };
+
+    // Định dạng các đánh giá
+    const formatReview = reviews.map((review: any) => {
+      let { createdAt, "student_sub.fullName": fullName, ...rest } = review;
+      createdAt = changeTime(createdAt);
+      return { ...rest, fullName, createdAt };
+    });
+
+    // Tính trung bình cộng của rate
+    const averageRate = await CourseSub.findOne({
+      where: { course_id: course.id, rate: { [Op.ne]: null } },
+      attributes: [[fn("AVG", col("rate")), "avgRate"]],
+      raw: true, // Đảm bảo trả về plain object
+    });
+
+    // Chuẩn bị dữ liệu trả về
+    let data: any = {
+      count,
+      avgRate: averageRate ? parseFloat((averageRate as any).avgRate) : 5,
+      reviews: formatReview,
+    };
+
+    // Kiểm tra nếu người dùng là sinh viên và lấy đánh giá của họ
     if (user.role == 0) {
       const sub = await CourseSub.findOne({
         attributes: ["id", "rate", "comment"],
         where: { course_id: course.id, student_id: user.id },
+        raw: true, // Tránh cấu trúc tuần hoàn
       });
       data.my_review = sub;
     }
+
     return res.json(data);
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+
+export const MyCourse = async (req: Request, res: Response) => {
+  try {
+    let { limit = 10, page = 1, key_name = "", topic_id } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const offset = (page - 1) * limit;
+    const whereCondition: any = {
+      [Op.or]: [{ name: { [Op.like]: `%${key_name}%` } }],
+    };
+    const user = (req as any).user;
+    if (topic_id) {
+      whereCondition.topic_id = topic_id;
+    }
+    let { count, rows: courses } = await Course.findAndCountAll({
+      limit,
+      offset,
+      where: whereCondition,
+      attributes: ["id", "name", "slug", "thumbnail", "type", "createdAt"],
+      include: [
+        {
+          model: Topic,
+          as: "topic",
+          attributes: ["name"],
+        },
+        {
+          model: CourseSub,
+          attributes: ["process"],
+          as: "subscribed_course",
+          where: {
+            student_id: user.id,
+          },
+        },
+      ],
+      raw: true,
+    });
+    const coursesWithStudentCount = await Promise.all(
+      courses.map(async (course: any) => {
+        let { createdAt, "topic.name": topic, ...rest } = course;
+        createdAt = changeTime(createdAt);
+        const studentCount = await CourseSub.count({
+          where: { course_id: course.id },
+        });
+        return {
+          ...rest,
+          createdAt,
+          studentCount,
+        };
+      })
+    );
+    return res.json({
+      count,
+      courses: coursesWithStudentCount,
+    });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
