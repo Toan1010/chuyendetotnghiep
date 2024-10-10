@@ -210,7 +210,7 @@ export const DetailCourse = async (req: Request, res: Response) => {
       return res.status(404).json("Khóa học không tồn tại!");
     }
     const { "topic.name": topic, ...rest } = course as any;
-    const countStudent = await CourseSub.count({
+    const studentCount = await CourseSub.count({
       where: { course_id: course.id },
     });
     const totalLesson = await Lesson.count({ where: { course_id: course.id } });
@@ -218,7 +218,7 @@ export const DetailCourse = async (req: Request, res: Response) => {
     //   attributes: [[fn("AVG", col("rate")), "averageRate"]],
     //   where: { course_id: course.id },
     // });
-    let data: any = { ...rest, topic, countStudent, totalLesson };
+    let data: any = { ...rest, topic, studentCount, totalLesson };
     if (user.role == 0) {
       const subscribe = await CourseSub.findOne({
         where: { course_id: course.id, student_id: user.id },

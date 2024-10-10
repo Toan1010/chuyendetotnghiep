@@ -21,7 +21,7 @@ export const ListLesson = async (req: Request, res: Response) => {
     const id = req.params.course_id;
     const { count: totalLesson, rows: lessons } = await Lesson.findAndCountAll({
       where: { course_id: id },
-      attributes: ["id", "name", "inCourse"],
+      attributes: ["id", "name", "description", "inCourse"],
       order: [["inCourse", "ASC"]],
     });
     return res.json({ totalLesson, lessons });
@@ -90,11 +90,10 @@ export const UpdateLesson = async (req: Request, res: Response) => {
         inCourse,
       } = req.body;
 
-      if (inCourse === 0) {
+      if (inCourse == 0) {
         inCourse = lesson.inCourse;
       }
-      console.log(inCourse);
-      
+
       await lesson.update({ name, description, context });
 
       await UpdateLessonOrder(lesson, inCourse);
@@ -120,7 +119,19 @@ export const DeleteLesson = async (req: Request, res: Response) => {
     if (!lesson) {
       return res.status(404).json("Bài học không tồn tại");
     }
+    const courseId = lesson.course_id;
+
+    // Xóa bài học
     await lesson.destroy();
+
+    const remainingLessons = await Lesson.findAll({
+      where: { course_id: courseId },
+      order: [["inCourse", "ASC"]],
+    });
+
+    for (let i = 0; i < remainingLessons.length; i++) {
+      await remainingLessons[i].update({ inCourse: i + 1 });
+    }
     return res.json("Xóa bài học thành công!");
   } catch (error: any) {
     return res.status(500).json(error.message);
