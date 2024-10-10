@@ -139,3 +139,31 @@ export const verifySupadmin = async (
     return res.status(500).json(error.message);
   }
 };
+
+export const optionalAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return next();
+    }
+    const accessToken = authHeader.split(" ")[1];
+    if (!accessToken) {
+      return next();
+    }
+    const data = await tokenVerify(accessToken, "access");
+
+    (req as any).user = data;
+    next();
+  } catch (error: any) {
+    if (error.message === "jwt expired") {
+      res.status(401).json("Access token expired");
+    } else {
+      res.status(500).json(error.message);
+    }
+  }
+};

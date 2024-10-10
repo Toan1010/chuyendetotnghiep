@@ -21,7 +21,7 @@ export const ListLesson = async (req: Request, res: Response) => {
     const id = req.params.course_id;
     const { count: totalLesson, rows: lessons } = await Lesson.findAndCountAll({
       where: { course_id: id },
-      attributes: ["id", "name"],
+      attributes: ["id", "name", "inCourse"],
       order: [["inCourse", "ASC"]],
     });
     return res.json({ totalLesson, lessons });
@@ -84,12 +84,17 @@ export const UpdateLesson = async (req: Request, res: Response) => {
     );
     const context = req.file?.filename || lesson.context;
     try {
-      const {
+      let {
         name = lesson.name,
         description = lesson.description,
-        inCourse = lesson.inCourse,
+        inCourse,
       } = req.body;
 
+      if (inCourse === 0) {
+        inCourse = lesson.inCourse;
+      }
+      console.log(inCourse);
+      
       await lesson.update({ name, description, context });
 
       await UpdateLessonOrder(lesson, inCourse);

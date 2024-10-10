@@ -12,9 +12,14 @@ router.post("/forgot_password/", Student.ForgotPassword);
 router.post("/forgot_password/:id/", Student.ResetPassword);
 
 router.get("/list/", verifyAdmin, Student.GetListStudent);
+router.get("/detail/:id", verifyCanStudent, Student.DetailInfo);
 router.post("/create/", verifyCanStudent, Student.CreateStudent);
 router.post("/create/bulk/", verifyCanStudent, Student.CreateStudentBulk);
-router.put("/change_status/:student_id", verifyCanStudent, Student.ChangeStatus);
+router.put(
+  "/change_status/:student_id",
+  verifyCanStudent,
+  Student.ChangeStatus
+);
 router.delete("/delete/:student_id", verifyCanStudent, Student.DeleteStudent);
 
 router.get("/my_info", verifyStudent, Student.MyInfo);

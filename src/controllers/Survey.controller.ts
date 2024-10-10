@@ -9,6 +9,21 @@ import { convertString } from "../helpers/convertToSlug";
 export const GetListSurvey = async (req: Request, res: Response) => {
   try {
     let { limit = 10, page = 1, key_name = "" } = req.query;
+    const user = (req as any).user;
+    let includeOptions: any[] = [];
+
+    if (user.role === 0) {
+      // If user is a student, perform a left join with SurveyAttend
+      includeOptions = [
+        {
+          model: SurveyAttend,
+          as: "attend",
+          required: false, // Left join, not inner join
+          where: { student_id: user.id }, // Join condition
+          attributes: ["id"], // Don't select any additional columns from SurveyAttend
+        },
+      ];
+    }
     page = parseInt(page as string);
     limit = parseInt(limit as string);
     const offset = (page - 1) * limit;
@@ -20,15 +35,18 @@ export const GetListSurvey = async (req: Request, res: Response) => {
       offset,
       where: whereCondition,
       attributes: ["id", "name", "slug", "dueAt"],
+      include: includeOptions,
       raw: true,
     });
     const survey_detail = await Promise.all(
       surveys.map(async (survey: any) => {
+        const { "attend.id": attend, ...rest } = survey;
         const studentCount = await SurveyAttend.count({
           where: { survey_id: survey.id },
         });
         return {
-          ...survey,
+          attend,
+          ...rest,
           participated: studentCount,
         };
       })
@@ -137,17 +155,6 @@ export const DeleteSurvey = async (req: Request, res: Response) => {
     }
     await survey.destroy();
     return res.json("Khao sat duoc xoa thanh cong!");
-  } catch (error: any) {
-    return res.status(500).json(error.message);
-  }
-};
-
-export const HaveAttended = async (req: Request, res: Response) => {
-  try {
-    const user = (req as any).user;
-    const { count, rows: surveys } = await Survey.findAndCountAll({
-      attributes: [],
-    });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }

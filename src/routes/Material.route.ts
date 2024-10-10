@@ -14,6 +14,7 @@ router.post("/create-document/:course_id", verifyCanCourse, Material.CreateDoc);
 router.put("/update-document/:doc_id", verifyCanCourse, Material.UpdateDoc);
 router.delete("/delete-document/:doc_id", verifyCanCourse, Material.DeleteDoc);
 
-router.get("/detail/:course_slug/:lesson_id", verifyAccessToken, Material.DetailLesson)
+router.get("/lesson/:course_slug/:lesson_id", verifyAccessToken, Material.DetailLesson)
+router.get("/document/detail/:course_slug/:lesson_id", verifyAccessToken, Material.DetailLesson)
 
 export default router;

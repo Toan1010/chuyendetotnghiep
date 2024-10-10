@@ -37,6 +37,22 @@ export const GetListStudent = async (req: Request, res: Response) => {
   }
 };
 
+export const DetailInfo = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const student = await Student.findByPk(id, {
+      attributes: ["id", "fullName", "email", "status", "avatar", "createdAt"],
+      raw: true,
+    });
+    if (!student) {
+      return res.status(404).json("Sinh Viên không tồn tại!");
+    }
+    return res.json({ ...student });
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
 export const CreateStudent = async (req: Request, res: Response) => {
   avatarUpload.single("avatar")(req, res, async (err: any) => {
     if (err instanceof multer.MulterError) {

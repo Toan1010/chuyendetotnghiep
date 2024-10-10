@@ -64,7 +64,10 @@ export const UpdateLessonOrder = async (
 ) => {
   const currentOrder = currentLesson.inCourse;
   const course_id = currentLesson.course_id;
-  if (currentOrder === newOrder) {
+
+  if (currentOrder == newOrder) {
+    
+    console.log("curene");
     return currentLesson;
   }
   const maxOrderNumber =

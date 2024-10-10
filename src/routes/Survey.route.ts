@@ -1,6 +1,7 @@
 import express, { Router } from "express";
 import * as Survey from "../controllers/Survey.controller";
 import {
+  optionalAuth,
   verifyAccessToken,
   verifyStudent,
   verifySupadmin,
@@ -8,8 +9,7 @@ import {
 
 const router: Router = express.Router();
 
-router.get("/list/", Survey.GetListSurvey);
-router.get("/have-attended/", verifyStudent, Survey.HaveAttended);
+router.get("/list/", optionalAuth, Survey.GetListSurvey);
 router.get("/:slug/", verifyAccessToken, Survey.DetailSurvey);
 
 router.post("/attend/:survey_id", verifyStudent, Survey.TakeSurvey);
