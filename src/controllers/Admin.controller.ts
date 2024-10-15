@@ -167,6 +167,9 @@ export const MyInfo = async (req: Request, res: Response) => {
       ],
     });
     const adminData = admin ? admin.get({ plain: true }) : null;
+    if (adminData) {
+      adminData.role = adminData.role === "1" ? "normal_admin" : "super_admin";
+    }
     return res.json(adminData);
   } catch (error: any) {
     return res.status(500).json(error.message);
