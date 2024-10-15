@@ -8,6 +8,7 @@ router.get("/list/", verifySupadmin, Admin.GetListAdmin);
 router.post("/create/", verifySupadmin, Admin.CreateAdmin);
 router.put("/update-status/:id", verifySupadmin, Admin.UpdateStatus);
 router.put("/update-permission/:id", verifySupadmin, Admin.UpdatePermission);
+router.delete("/delete/:id", verifySupadmin, Admin.DeleteAdmin);
 
 router.get("/my-info/", verifyAdmin, Admin.MyInfo);
 router.put("/my-info/update", verifyAdmin, Admin.UpdateMyInfo);

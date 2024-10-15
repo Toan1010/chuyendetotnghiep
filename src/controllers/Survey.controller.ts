@@ -5,6 +5,7 @@ import SurveyQuestion from "../models/SurveyQuestion.Model";
 import { Op } from "sequelize";
 import SurveyAttend from "../models/SurveyAttend";
 import { convertString } from "../helpers/convertToSlug";
+import { changeTime } from "../helpers/formatTime";
 
 export const GetListSurvey = async (req: Request, res: Response) => {
   try {
@@ -34,20 +35,27 @@ export const GetListSurvey = async (req: Request, res: Response) => {
       limit,
       offset,
       where: whereCondition,
-      attributes: ["id", "name", "slug", "dueAt"],
+      attributes: ["id", "name", "slug", "dueAt", "createdAt"],
       include: includeOptions,
       raw: true,
     });
     const survey_detail = await Promise.all(
       surveys.map(async (survey: any) => {
-        const { "attend.id": attend, ...rest } = survey;
+        let { "attend.id": attend, createdAt, dueAt, ...rest } = survey;
         const studentCount = await SurveyAttend.count({
           where: { survey_id: survey.id },
         });
+        const isExpired = new Date(dueAt).getTime() < Date.now();
+
+        dueAt = changeTime(dueAt);
+        createdAt = changeTime(createdAt);
         return {
-          attend,
           ...rest,
+          attend,
+          isExpired,
           participated: studentCount,
+          createdAt,
+          dueAt,
         };
       })
     );

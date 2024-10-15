@@ -34,7 +34,13 @@ export const GetListAdmin = async (req: Request, res: Response) => {
       ],
       order: [["id", orderDirection]],
     });
-    return res.json({ count, admins });
+    const updatedAdmins = admins.map((admin) => {
+      const adminData = admin.get({ plain: true });
+      adminData.role = adminData.role === "1" ? "normal_admin" : "super_admin";
+      return adminData;
+    });
+
+    return res.json({ count, admins: updatedAdmins });
   } catch (error: any) {
     return res.json(error.message);
   }
@@ -104,6 +110,7 @@ export const CreateAdmin = async (req: Request, res: Response) => {
     await Admin.create({
       fullName,
       email,
+      role: "1",
       hashPassword,
       course_permission,
       student_permission,
@@ -148,6 +155,20 @@ export const UpdatePermission = async (req: Request, res: Response) => {
       exam_permission,
     });
     return res.json("Đã cập nhật quyền cho admin!");
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const DeleteAdmin = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const admin = await Admin.findByPk(id);
+    if (!admin) {
+      return res.status(404).json("Quản trị viên không tồn tại!");
+    }
+    await admin.destroy();
+    return res.json("Xóa quản trị viên thành công!");
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
