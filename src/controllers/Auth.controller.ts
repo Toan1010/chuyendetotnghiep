@@ -5,10 +5,7 @@ import { bcryptDecrypt } from "../helpers/bcryptHash";
 import { tokenGenerate, tokenVerify } from "../helpers/tokenHandle";
 
 let refreshTokenlist: string[] = [];
-const roleMap: { [key: string]: number } = {
-  super_admin: 2,
-  normal_admin: 1,
-};
+
 
 export const LoginStudent = async (req: Request, res: Response) => {
   try {
@@ -52,7 +49,7 @@ export const LoginAdmin = async (req: Request, res: Response) => {
       if (!isExist.status) {
         return res.status(403).json("Tài khoản của bạn đang bị khóa!");
       }
-      let tokenData = { id: isExist.id, role: roleMap[isExist.role] };
+      let tokenData = { id: isExist.id, role: isExist.role };
 
       const accessToken = tokenGenerate(tokenData, "access");
       const refreshToken = tokenGenerate(tokenData, "refresh");

@@ -108,7 +108,6 @@ export const CreateAdmin = async (req: Request, res: Response) => {
       course_permission,
       student_permission,
       exam_permission,
-      role: "normal_admin",
     });
     return res.json("Tạo tài khoản thành công!");
   } catch (error: any) {

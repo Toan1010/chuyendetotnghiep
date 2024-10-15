@@ -6,7 +6,7 @@ class Admin extends Model {
   public fullName!: string;
   public email!: string;
   public hashPassword!: string;
-  public role!: string;
+  public role!: number;
   public course_permission!: boolean;
   public student_permission!: boolean;
   public exam_permission!: boolean;
@@ -34,8 +34,8 @@ Admin.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM,
-      values: ["super_admin", "normal_admin"],
+      type: DataTypes.ENUM("2", "1"),
+      defaultValue: 1,
       allowNull: false,
     },
     course_permission: {

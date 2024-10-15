@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 
 import multer from "multer";
 import path from "path";
@@ -394,6 +394,51 @@ export const MyCourse = async (req: Request, res: Response) => {
       count,
       courses: coursesWithStudentCount,
     });
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const ListStudent = async (req: Request, res: Response) => {
+  try {
+    let { limit = 10, page = 1, key_name = "" } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const offset = (page - 1) * limit;
+    const whereCondition: any = {
+      [Op.or]: [{ fullName: { [Op.like]: `%${key_name}%` } }],
+    };
+    const id = req.params.id;
+    const course = await Course.findByPk(id);
+    if (!course) {
+      return res.status(404).json("Khóa học không tồn tại!");
+    }
+    const { count, rows: students } = await Student.findAndCountAll({
+      limit,
+      offset,
+      attributes: ["id", "fullName"],
+      where: whereCondition,
+      include: [
+        {
+          model: CourseSub,
+          as: "subscribed_student",
+          attributes: ["process", "createdAt"],
+          where: { course_id: id },
+        },
+      ],
+    });
+
+    const formatStudent = students.map((item: any) => {
+      const plainItem = item.get({ plain: true }); // Chuyển về plain object
+      const { subscribed_student, ...rest } = plainItem;
+
+      let { createdAt, process } = subscribed_student[0];
+      createdAt = changeTime(createdAt);
+
+      return { ...rest, createdAt, process };
+    });
+
+    return res.json({ count, students: formatStudent });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }

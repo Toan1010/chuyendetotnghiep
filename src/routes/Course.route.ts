@@ -9,6 +9,7 @@ import {
 const router: Router = express.Router();
 
 router.get("/list/", Course.GetListCourse);
+router.get("/list-student/:id", Course.ListStudent);
 router.get("/my-course/", verifyStudent, Course.MyCourse);
 router.get("/:slug", verifyAccessToken, Course.DetailCourse);
 

@@ -39,12 +39,12 @@ const verifyPermission = async (
   try {
     await verifyAccessToken(req, res, async () => {
       const user = (req as any).user;
-      if (user.role === 0) {
+      if (user.role == 0) {
         return res
           .status(401)
           .json("Đăng nhập với vai trò là Admin để sử dụng chức năng này!");
       }
-      if (user.role === 1) {
+      if (user.role == 1) {
         const hasPermission = await permissionCheck(user.id);
         if (!hasPermission) {
           return res
@@ -67,7 +67,7 @@ export const verifyStudent = async (
   try {
     await verifyAccessToken(req, res, async () => {
       const user = (req as any).user;
-      if (user && user.role === 0) {
+      if (user && user.role == 0) {
         return next();
       } else {
         return res
@@ -128,7 +128,7 @@ export const verifySupadmin = async (
   try {
     await verifyAccessToken(req, res, async () => {
       const user = (req as any).user;
-      if (user.role !== 2) {
+      if (user.role != 2) {
         return res
           .status(401)
           .json("Bạn không được cấp phép để thực hiện hành động này");

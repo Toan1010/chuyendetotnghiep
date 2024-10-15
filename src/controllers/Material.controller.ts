@@ -143,7 +143,7 @@ export const ListDoc = async (req: Request, res: Response) => {
     const id = req.params.course_id;
     const { count: totalDocs, rows: docs } = await Document.findAndCountAll({
       where: { course_id: id },
-      attributes: ["id", "name", "context"],
+      attributes: ["id", "name", "context", "createdAt"],
       order: [["createdAt", "ASC"]],
     });
     return res.json({ totalDocs, docs });
@@ -203,7 +203,7 @@ export const UpdateDoc = async (req: Request, res: Response) => {
           console.error("Failed to delete old avatar:", error.message);
         }
       }
-      return res.json("Sửa bài học thành công!");
+      return res.json("Sửa tài liệu thành công!");
     } catch (error: any) {
       return res.status(500).json(error.message);
     }
