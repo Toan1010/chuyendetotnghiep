@@ -378,13 +378,21 @@ export const MyCourse = async (req: Request, res: Response) => {
     });
     const coursesWithStudentCount = await Promise.all(
       courses.map(async (course: any) => {
-        let { createdAt, "topic.name": topic, ...rest } = course;
+        let {
+          createdAt,
+          "topic.name": topic,
+          topic_id,
+          "subscribed_course.process": process,
+          ...rest
+        } = course;
         createdAt = changeTime(createdAt);
         const studentCount = await CourseSub.count({
           where: { course_id: course.id },
         });
         return {
           ...rest,
+          topic,
+          process,
           createdAt,
           studentCount,
         };

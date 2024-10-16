@@ -68,14 +68,30 @@ export const GetListSurvey = async (req: Request, res: Response) => {
 export const DetailSurvey = async (req: Request, res: Response) => {
   try {
     const slug = req.params.slug;
-    const survey = await Survey.findOne({ where: { slug } });
+    const survey = await Survey.findOne({ where: { slug }, raw: true });
     if (!survey) {
       return res.status(404).json({ error: "Bài khảo sát không tồn tại!" });
     }
+    let { dueAt, createdAt, ...rest } = survey as any;
+    dueAt = changeTime(dueAt);
+    createdAt = changeTime(createdAt);
+    const participated = await SurveyAttend.count({
+      where: { survey_id: survey.id },
+    });
     const { count, rows: questions } = await SurveyQuestion.findAndCountAll({
       where: { survey_id: survey.id },
     });
-    return res.json({ survey, count, questions });
+    return res.json({
+      survey: {
+        ...rest,
+        numberQuestion: count,
+        participated,
+        dueAt,
+        createdAt,
+      },
+
+      questions,
+    });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
