@@ -29,18 +29,52 @@ export const ListExam = async (req: Request, res: Response) => {
         "numberQuestion",
         "reDoTime",
         "submitTime",
+        "createdAt",
       ],
       include: [
         {
           model: Course,
           as: "exam_course",
-          attributes: [],
+          attributes: ["name"],
           where: courseCondition,
         },
       ],
       raw: true,
     });
-    return res.json({ count, exams });
+
+    const examIds = exams.map((exam: any) => exam.id);
+    const studentDidCounts = await ExamResult.findAll({
+      where: {
+        exam_id: examIds,
+      },
+      attributes: [
+        "exam_id",
+        [
+          Sequelize.fn(
+            "COUNT",
+            Sequelize.fn("DISTINCT", Sequelize.col("student_id"))
+          ),
+          "studentDid",
+        ],
+      ],
+      group: ["exam_id"],
+      raw: true,
+    });
+
+    // Chuyển đổi kết quả thành map để dễ tra cứu
+    const studentDidMap = studentDidCounts.reduce((map: any, item: any) => {
+      map[item.exam_id] = item.studentDid;
+      return map;
+    }, {});
+
+    let format = exams.map((item: any) => {
+      let { createdAt, "exam_course.name": course, id, ...rest } = item;
+      createdAt = changeTime(createdAt);
+      const studentDid = studentDidMap[id] || 0; // Nếu không có thì đặt là 0
+
+      return { id, ...rest, course, createdAt, studentDid };
+    });
+    return res.json({ count, exams: format });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
@@ -514,6 +548,80 @@ export const SubmitExam = async (req: Request, res: Response) => {
     return res.json({ result });
   } catch (error: any) {
     console.log(error);
+    return res.status(500).json(error.message);
+  }
+};
+
+export const ExamHaveDone = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    let { limit = 10, page = 1, course_slug = null } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const offset = (page - 1) * limit;
+    const { count, rows: exams } = await Exam.findAndCountAll({
+      limit,
+      offset,
+      attributes: [
+        "id",
+        "name",
+        "passingQuestion",
+        "numberQuestion",
+        "reDoTime",
+        "submitTime",
+        "createdAt",
+      ],
+      include: [
+        {
+          model: ExamResult,
+          as: "result_student",
+          where: { student_id: user.id },
+          attributes: [],
+        },
+        {
+          model: Course,
+          as: "exam_course",
+          attributes: ["name"],
+        },
+      ],
+      distinct: true,
+      raw: true,
+    });
+
+    const examIds = exams.map((exam: any) => exam.id);
+    const studentDidCounts = await ExamResult.findAll({
+      where: {
+        exam_id: examIds,
+      },
+      attributes: [
+        "exam_id",
+        [
+          Sequelize.fn(
+            "COUNT",
+            Sequelize.fn("DISTINCT", Sequelize.col("student_id"))
+          ),
+          "studentDid",
+        ],
+      ],
+      group: ["exam_id"],
+      raw: true,
+    });
+
+    // Chuyển đổi kết quả thành map để dễ tra cứu
+    const studentDidMap = studentDidCounts.reduce((map: any, item: any) => {
+      map[item.exam_id] = item.studentDid;
+      return map;
+    }, {});
+
+    let format = exams.map((item: any) => {
+      let { createdAt, "exam_course.name": course, id, ...rest } = item;
+      createdAt = changeTime(createdAt);
+      const studentDid = studentDidMap[id] || 0; // Nếu không có thì đặt là 0
+
+      return { id, ...rest, course, createdAt, studentDid };
+    });
+    return res.json({ count, exams:format });
+  } catch (error: any) {
     return res.status(500).json(error.message);
   }
 };

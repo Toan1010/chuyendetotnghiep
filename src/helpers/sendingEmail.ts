@@ -1,6 +1,10 @@
 import Transporter from "../configurations/mailTransporter";
 
-export const sendResetEmail = async (email: string, resetString: string) => {
+export const sendResetEmail = async (
+  origin: string,
+  email: string,
+  resetString: string
+) => {
   try {
     const mailOptions = {
       to: email,
@@ -67,7 +71,7 @@ export const sendResetEmail = async (email: string, resetString: string) => {
         <h1>Password Reset Request</h1>
         <p>Hello,</p>
         <p>You have requested to reset your password. Please use the following link to proceed with resetting your password:</p>
-        <a href="http://localhost:8000/resetstring/${resetString}" class="button">Reset Password</a>
+        <a href="${origin}/auth/forgot-password/${resetString}" class="button">Reset Password</a>
         <p>For security reasons, this link will expire in 1 hour. If you did not request this change, please ignore this email.</p>
         <p>Thank you,<br>Your Company Name</p>
         <div class="footer">

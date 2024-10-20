@@ -16,5 +16,6 @@ router.put("/my-info/change-password", verifyAdmin, Admin.ChangePassword);
 
 router.post("/forgot-password/", Admin.ForgotPassword);
 router.post("/forgot-password/:reset/", Admin.ResetPassword);
+router.get("/forgot-password/:reset/", Admin.VerifyResetstring);
 
 export default router;

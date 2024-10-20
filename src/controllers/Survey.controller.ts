@@ -6,6 +6,7 @@ import { Op } from "sequelize";
 import SurveyAttend from "../models/SurveyAttend";
 import { convertString } from "../helpers/convertToSlug";
 import { changeTime } from "../helpers/formatTime";
+import Student from "../models/Student.Model";
 
 export const GetListSurvey = async (req: Request, res: Response) => {
   try {
@@ -179,6 +180,32 @@ export const DeleteSurvey = async (req: Request, res: Response) => {
     }
     await survey.destroy();
     return res.json("Khao sat duoc xoa thanh cong!");
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const GetListAttendSurvey = async (req: Request, res: Response) => {
+  try {
+    const slug = req.params.slug;
+    const survey = await Survey.findOne({ where: { slug } });
+    if (!survey) {
+      return res.status(404).json("Khảo sát không tồn tại!");
+    }
+    const { count, rows: participates } = await SurveyAttend.findAndCountAll({
+      where: { survey_id: survey.id },
+      attributes: ["id", "createdAt"],
+      include: [{ model: Student, as: "student", attributes: ["fullName"] }],
+      raw: true,
+    });
+
+    const reformat = participates.map((item: any) => {
+      let { id, "student.fullName": name, createdAt } = item;
+      createdAt = changeTime(createdAt);
+      return { id, name, createdAt };
+    });
+
+    return res.json({ count, participates: reformat });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }

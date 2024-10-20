@@ -48,7 +48,7 @@ export const GetListAdmin = async (req: Request, res: Response) => {
 
 export const ForgotPassword = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { origin, email } = req.body;
     const admin = await Admin.findOne({ where: { email } });
     if (!admin) {
       return res.status(404).json("Email chưa được đăng ký!");
@@ -57,8 +57,27 @@ export const ForgotPassword = async (req: Request, res: Response) => {
     const dataString = JSON.stringify(data);
     const resetString = encryptString(dataString);
     ResetPasswordlist.push(resetString);
-    await sendResetEmail(email, resetString);
+    await sendResetEmail(origin, email, resetString);
     return res.status(200).json("Kiểm tra email để thay dổi mật khẩu!");
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const VerifyResetstring = async (req: Request, res: Response) => {
+  try {
+    const resetString = req.params.reset;
+    if (!ResetPasswordlist.includes(resetString)) {
+      return res.status(403).json("Yêu cầu làm mới bị lỗi!");
+    }
+    const { email, expired } = decryptString(resetString);
+    if (new Date() > new Date(expired)) {
+      ResetPasswordlist = ResetPasswordlist.filter(
+        (token) => token !== resetString
+      );
+      return res.status(400).json("Yêu cầu làm mới đã hết hạn!");
+    }
+    return res.json(email);
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
@@ -69,13 +88,16 @@ export const ResetPassword = async (req: Request, res: Response) => {
     const resetString = req.params.reset;
     const { new_password, confirm_password } = req.body;
     if (new_password !== confirm_password) {
-      return res.status(401).json("Xác nhận mẩtj khẩu không thành công!");
+      return res.status(401).json("Xác nhận mật khẩu không thành công!");
     }
     if (!ResetPasswordlist.includes(resetString)) {
       return res.status(403).json("Yêu cầu làm mới bị lỗi!");
     }
     const { email, expired } = decryptString(resetString);
     if (new Date() > new Date(expired)) {
+      ResetPasswordlist = ResetPasswordlist.filter(
+        (token) => token !== resetString
+      );
       return res.status(400).json("Yêu cầu làm mới đã hết hạn!");
     }
     const admin = await Admin.findOne({ where: { email } });

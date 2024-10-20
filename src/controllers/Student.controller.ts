@@ -210,7 +210,7 @@ export const ChangePassword = async (req: Request, res: Response) => {
 
 export const ForgotPassword = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { origin, email } = req.body;
     const student = await Student.findOne({ where: { email } });
     if (!student) {
       return res.status(404).json("Email này chưa được đăng ký!");
@@ -219,7 +219,7 @@ export const ForgotPassword = async (req: Request, res: Response) => {
     const dataString = JSON.stringify(data);
     const resetString = encryptString(dataString);
     ResetPasswordlist.push(resetString);
-    await sendResetEmail(email, resetString);
+    await sendResetEmail(origin, email, resetString);
     return res.status(200).json("Kiểm tra email để thay dổi mật khẩu!");
   } catch (error) {
     return res
