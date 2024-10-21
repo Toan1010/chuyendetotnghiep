@@ -21,7 +21,7 @@ export const ListLesson = async (req: Request, res: Response) => {
     const id = req.params.course_id;
     const { count: totalLesson, rows: lessons } = await Lesson.findAndCountAll({
       where: { course_id: id },
-      attributes: ["id", "name", "description", "inCourse"],
+      attributes: ["id", "name", "description", "inCourse", "context"],
       order: [["inCourse", "ASC"]],
     });
     return res.json({ totalLesson, lessons });

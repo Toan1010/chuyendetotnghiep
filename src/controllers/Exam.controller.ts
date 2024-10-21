@@ -10,15 +10,18 @@ import ExamResult from "../models/ExamResult.Model";
 import { changeTime } from "../helpers/formatTime";
 import Student from "../models/Student.Model";
 import CourseSub from "../models/CourseSub.Model";
-import _ from "lodash";
+import _, { update } from "lodash";
 
 export const ListExam = async (req: Request, res: Response) => {
   try {
-    let { limit = 10, page = 1, course_slug = null } = req.query;
+    let { limit = 10, page = 1, key_name = "", course_slug = null } = req.query;
     page = parseInt(page as string);
     limit = parseInt(limit as string);
     const offset = (page - 1) * limit;
     const courseCondition = course_slug ? { slug: course_slug } : {};
+    const whereCondition: any = {
+      [Op.or]: [{ name: { [Op.like]: `%${key_name}%` } }],
+    };
     const { count, rows: exams } = await Exam.findAndCountAll({
       limit,
       offset,
@@ -31,6 +34,7 @@ export const ListExam = async (req: Request, res: Response) => {
         "submitTime",
         "createdAt",
       ],
+      where: whereCondition,
       include: [
         {
           model: Course,
@@ -210,16 +214,27 @@ export const DetailExam = async (req: Request, res: Response) => {
   try {
     const exam_id = req.params.exam_id;
     const exam = await Exam.findByPk(exam_id, {
-      attributes: [
-        "name",
-        "numberQuestion",
-        "submitTime",
-        "reDoTime",
-        "passingQuestion",
+      include: [
+        {
+          model: Course,
+          as: "exam_course",
+          attributes: ["name"],
+        },
       ],
       raw: true,
     });
-    return res.json({ ...exam });
+    if (!exam) {
+      return res.status(404).json("Bai thi khong ton tai!");
+    }
+    let {
+      createdAt,
+      updatedAt,
+      "exam_course.name": course,
+      ...rest
+    } = exam as any;
+    createdAt = changeTime(createdAt);
+    updatedAt = changeTime(updatedAt);
+    return res.json({ ...rest, course, createdAt, updatedAt });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
@@ -555,10 +570,13 @@ export const SubmitExam = async (req: Request, res: Response) => {
 export const ExamHaveDone = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    let { limit = 10, page = 1, course_slug = null } = req.query;
+    let { limit = 10, page = 1, key_name = "", course_slug = null } = req.query;
     page = parseInt(page as string);
     limit = parseInt(limit as string);
     const offset = (page - 1) * limit;
+    const whereCondition: any = {
+      [Op.or]: [{ name: { [Op.like]: `%${key_name}%` } }],
+    };
     const { count, rows: exams } = await Exam.findAndCountAll({
       limit,
       offset,
@@ -571,6 +589,7 @@ export const ExamHaveDone = async (req: Request, res: Response) => {
         "submitTime",
         "createdAt",
       ],
+      where: whereCondition,
       include: [
         {
           model: ExamResult,
@@ -620,7 +639,7 @@ export const ExamHaveDone = async (req: Request, res: Response) => {
 
       return { id, ...rest, course, createdAt, studentDid };
     });
-    return res.json({ count, exams:format });
+    return res.json({ count, exams: format });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
