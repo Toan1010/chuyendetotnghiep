@@ -10,7 +10,7 @@ import ExamResult from "../models/ExamResult.Model";
 import { changeTime } from "../helpers/formatTime";
 import Student from "../models/Student.Model";
 import CourseSub from "../models/CourseSub.Model";
-import _, { update } from "lodash";
+import _ from "lodash";
 
 export const ListExam = async (req: Request, res: Response) => {
   try {
@@ -160,37 +160,52 @@ export const AllExamResult = async (req: Request, res: Response) => {
     const exam_id = req.params.exam_id;
     const { student_id } = req.query;
     const exam = await Exam.findByPk(exam_id);
+
     if (!exam) {
-      return res.status(404).json("Exam khong ton taji");
+      return res.status(404).json("Exam không tồn tại");
     }
+
     const user = (req as any).user;
     let whereCondition: any = {
       exam_id,
     };
-    if (user.role !== 0) {
-      if (!student_id) {
-        return res.json("Chọn id sinh viên muốn xem kết quả");
-      }
-      whereCondition.student_id = student_id;
-    }
+
+    // Kiểm tra role của người dùng
     if (user.role === 0) {
+      // Sinh viên chỉ được xem kết quả của chính mình
       whereCondition.student_id = user.id;
+    } else if (user.role !== 0) {
+      // Nếu không phải sinh viên và có student_id trong query, lọc theo student_id
+      if (student_id) {
+        whereCondition.student_id = student_id;
+      }
     }
+
+    // Lấy kết quả thi kèm theo thông tin sinh viên
     const { count, rows: results } = await ExamResult.findAndCountAll({
       where: whereCondition,
       attributes: ["id", "correctAns", "createdAt", "submitAt"],
       order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: Student,
+          as: "student_result", // alias cho bảng Student
+          attributes: ["id","fullName"], // lấy thuộc tính 'name' của Student
+        },
+      ],
     });
 
+    // Định dạng thời gian trước khi trả về
     const formatDate = results.map((result) => {
       let { createdAt, submitAt, ...rest } = result.get({
         plain: true,
       });
 
-      createdAt = changeTime(createdAt);
+      createdAt = changeTime(createdAt); // Định dạng lại thời gian
       submitAt = changeTime(submitAt);
       return { ...rest, createdAt, submitAt };
     });
+
     return res.json({ count, results: formatDate });
   } catch (error: any) {
     return res.status(500).json(error.message);
