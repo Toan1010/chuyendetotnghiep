@@ -103,10 +103,19 @@ export const AllQuestionOnExam = async (req: Request, res: Response) => {
       limit,
       offset,
       where: whereCondition,
-      attributes: ["id", "name", "type"],
+      attributes: ["id", "name", "type", "choice", "correctAns"],
+      order: [["id", "DESC"]],
       raw: true,
     });
-    return res.json({ count, questions });
+    const format = questions.map((question: any) => {
+      let { choice, correctAns, ...rest } = question;
+      choice = choice =
+        typeof choice === "string" ? JSON.parse(choice) : choice;
+      correctAns = correctAns =
+        typeof correctAns === "string" ? JSON.parse(correctAns) : correctAns;
+      return { ...rest, choice, correctAns };
+    });
+    return res.json({ count, questions: format });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
@@ -351,6 +360,33 @@ export const AddQuestions = async (req: Request, res: Response) => {
         let choice = JSON.parse(row.choice); // Chuyển đổi chuỗi thành JSON nếu cần
         let correctAns = JSON.parse(row.correctAns); // Chuyển đổi chuỗi thành JSON nếu cần
 
+        // Kiểm tra nếu loại câu hỏi là radio
+        if (row.type === "radio") {
+          if (correctAns.length !== 1) {
+            throw new Error(
+              `Câu hỏi "${row.name}" loại radio chỉ được phép có 1 đáp án đúng`
+            );
+          }
+
+          if (!choice.includes(correctAns[0])) {
+            throw new Error(
+              `Đáp án đúng của câu hỏi "${row.name}" không nằm trong danh sách các lựa chọn`
+            );
+          }
+        }
+
+        // Kiểm tra nếu loại câu hỏi là checkbox
+        if (row.type === "checkbox") {
+          const isValidAnswers = correctAns.every((ans: string) =>
+            choice.includes(ans)
+          );
+          if (!isValidAnswers) {
+            throw new Error(
+              `Tất cả đáp án đúng của câu hỏi "${row.name}" phải nằm trong danh sách các lựa chọn`
+            );
+          }
+        }
+
         return {
           name: row.name,
           type: row.type,
@@ -360,6 +396,7 @@ export const AddQuestions = async (req: Request, res: Response) => {
         };
       });
 
+      // Lưu danh sách câu hỏi vào cơ sở dữ liệu
       await ExamQuestion.bulkCreate(questions);
 
       return res.status(200).json({
@@ -376,9 +413,12 @@ export const AddQuestion = async (req: Request, res: Response) => {
     const exam_id = req.params.exam_id;
     const exam = await Exam.findByPk(exam_id);
     if (!exam) {
-      return res.status(404).json("Exam khoong ton tai");
+      return res.status(404).json("Exam không tồn tại");
     }
+
     const { name, type, choice, correctAns } = req.body;
+
+    // Kiểm tra dữ liệu đầu vào
     if (
       !name ||
       !type ||
@@ -387,8 +427,38 @@ export const AddQuestion = async (req: Request, res: Response) => {
     ) {
       return res.status(400).json("Dữ liệu không hợp lệ");
     }
+
+    // Nếu là radio thì chỉ cho phép 1 đáp án đúng
+    if (type === "radio") {
+      if (correctAns.length !== 1) {
+        return res
+          .status(400)
+          .json("Câu hỏi loại radio chỉ được phép có 1 đáp án đúng");
+      }
+
+      // Kiểm tra nếu đáp án đúng có nằm trong danh sách các lựa chọn
+      if (!choice.includes(correctAns[0])) {
+        return res
+          .status(400)
+          .json("Đáp án đúng không nằm trong danh sách các lựa chọn");
+      }
+    }
+
+    // Nếu là checkbox thì các đáp án đúng phải nằm trong danh sách các lựa chọn
+    if (type === "checkbox") {
+      const isValidAnswers = correctAns.every((ans: string) =>
+        choice.includes(ans)
+      );
+      if (!isValidAnswers) {
+        return res
+          .status(400)
+          .json("Tất cả đáp án đúng phải nằm trong danh sách các lựa chọn");
+      }
+    }
+
+    // Tạo câu hỏi
     await ExamQuestion.create({ name, type, choice, correctAns, exam_id });
-    return res.json("Tao cau hoi thanh cong ");
+    return res.json("Tạo câu hỏi thành công");
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
@@ -428,8 +498,9 @@ export const UpdateQuestion = async (req: Request, res: Response) => {
     const question_id = req.params.question_id;
     const question = await ExamQuestion.findByPk(question_id);
     if (!question) {
-      return res.status(404).json("Question khong ton tai");
+      return res.status(404).json("Câu hỏi không tồn tại");
     }
+
     const {
       name = question.name,
       type = question.type,
@@ -441,9 +512,37 @@ export const UpdateQuestion = async (req: Request, res: Response) => {
         : question.correctAns,
     } = req.body;
 
+    // Kiểm tra nếu loại câu hỏi là radio
+    if (type === "radio") {
+      if (correctAns.length !== 1) {
+        return res
+          .status(400)
+          .json(`Câu hỏi loại radio chỉ được phép có 1 đáp án đúng`);
+      }
+
+      if (!choice.includes(correctAns[0])) {
+        return res
+          .status(400)
+          .json(`Đáp án đúng không nằm trong danh sách các lựa chọn`);
+      }
+    }
+
+    // Kiểm tra nếu loại câu hỏi là checkbox
+    if (type === "checkbox") {
+      const isValidAnswers = correctAns.every((ans: string) =>
+        choice.includes(ans)
+      );
+      if (!isValidAnswers) {
+        return res
+          .status(400)
+          .json(`Tất cả đáp án đúng phải nằm trong danh sách các lựa chọn`);
+      }
+    }
+
+    // Cập nhật câu hỏi
     await question.update({ name, type, choice, correctAns });
 
-    return res.json("Sua Cau hoi thanh cong");
+    return res.json("Cập nhật câu hỏi thành công");
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
