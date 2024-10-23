@@ -716,10 +716,11 @@ export const SubmitExam = async (req: Request, res: Response) => {
 export const ExamHaveDone = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    let { limit = 10, page = 1, key_name = "", course_slug = null } = req.query;
+    let { limit = 10, page = 1, key_name = "", topic_id = null } = req.query;
     page = parseInt(page as string);
     limit = parseInt(limit as string);
     const offset = (page - 1) * limit;
+    const topicCondition = topic_id ? { id: topic_id } : {};
     const whereCondition: any = {
       [Op.or]: [{ name: { [Op.like]: `%${key_name}%` } }],
     };
@@ -746,6 +747,7 @@ export const ExamHaveDone = async (req: Request, res: Response) => {
         {
           model: Topic,
           as: "topic",
+          where: topicCondition,
           attributes: ["id", "name", "slug"],
         },
       ],
