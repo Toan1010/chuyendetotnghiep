@@ -1,15 +1,27 @@
 import { Request, Response } from "express";
 import Topic from "../models/Topic.Model";
 import { convertString } from "../helpers/convertToSlug";
+import { Op } from "sequelize";
 
 export const GetListTopic = async (req: Request, res: Response) => {
   try {
+    const { key_name = "" } = req.query;
+
     const { count, rows: topics } = await Topic.findAndCountAll({
-      attributes: ["id", "name", "slug"],
+      where: {
+        name: {
+          [Op.like]: `%${key_name}%`, 
+        },
+      },
+      attributes: ["id", "name", "description", "slug"],
+      order: [["name", "ASC"]], 
     });
+
     return res.json({ count, topics });
   } catch (error: any) {
-    return res.status(500).json(error.message);
+    return res
+      .status(500)
+      .json({ message: "Lỗi hệ thống", error: error.message });
   }
 };
 

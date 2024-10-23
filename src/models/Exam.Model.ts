@@ -1,15 +1,16 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../configurations/database";
-import Course from "./Course.Model";
+import Topic from "./Topic.Model";
 
 class Exam extends Model {
   public id!: number;
   public name!: string;
+  public slug!: string;
   public numberQuestion!: number;
   public passingQuestion!: number;
   public submitTime!: number;
   public reDoTime!: number;
-  public course_id!: number;
+  public topic_id!: number;
 }
 
 Exam.init(
@@ -23,6 +24,11 @@ Exam.init(
       type: DataTypes.STRING(255),
       unique: true,
       allowNull: false,
+    },
+    slug: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
     },
     numberQuestion: {
       type: DataTypes.INTEGER.UNSIGNED,
@@ -50,11 +56,11 @@ Exam.init(
         min: 0,
       },
     },
-    course_id: {
+    topic_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
       references: {
-        model: Course,
+        model: Topic,
         key: "id",
       },
       onUpdate: "CASCADE",
@@ -64,7 +70,7 @@ Exam.init(
   { sequelize, timestamps: true, tableName: "exam" }
 );
 
-Course.hasMany(Exam, { foreignKey: "course_id", as: "course_exam" });
-Exam.belongsTo(Course, { foreignKey: "course_id", as: "exam_course" });
+Topic.hasMany(Exam, { foreignKey: "topic_id", as: "exam" });
+Exam.belongsTo(Topic, { foreignKey: "topic_id", as: "topic" });
 
 export default Exam;
