@@ -57,8 +57,8 @@ ExamResult.init(
   { sequelize, tableName: "exam_result", timestamps: true }
 );
 
-ExamResult.belongsTo(Student, { foreignKey: "student_id", as: "student_result" });
-ExamResult.belongsTo(Exam, {foreignKey: "exam_id", as:"exam_result"});
+ExamResult.belongsTo(Student, { foreignKey: "student_id", as: "student" });
+ExamResult.belongsTo(Exam, { foreignKey: "exam_id", as: "exam" });
 
 Student.hasMany(ExamResult, { foreignKey: "student_id", as: "result_exam" });
 Exam.hasMany(ExamResult, { foreignKey: "exam_id", as: "result_student" });

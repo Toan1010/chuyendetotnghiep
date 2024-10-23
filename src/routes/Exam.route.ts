@@ -16,13 +16,13 @@ router.get("/list-student/:slug", verifyAdmin, ExamController.ListStudentAttend)
 router.get("/list-attend/:exam_id",verifyAccessToken , ExamController.AllExamResult);
 router.get("/detail-result/:result_id",verifyAccessToken, ExamController.DetailResultExam);
 
-router.get("/have-attend/", verifyStudent, ExamController.ExamHaveDone);
+// router.get("/have-attend/", verifyStudent, ExamController.ExamHaveDone);
 
 router.get("/attend/:slug", verifyStudent, ExamController.AttendExam);
 router.post("/submit/:result_id", verifyStudent, ExamController.SubmitExam);
 
 router.get("/detail/:slug", ExamController.DetailExam);
-router.post("/create/:course_id", verifyCanExam,ExamController.CreateExam);
+router.post("/create/", verifyCanExam,ExamController.CreateExam);
 router.put("/update/:exam_id", verifyCanExam,ExamController.UpdateExam);
 router.delete("/delete/:exam_id", verifyCanExam,ExamController.DeleteExam);
 
