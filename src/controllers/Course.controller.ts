@@ -36,22 +36,22 @@ export const GetListCourse = async (req: Request, res: Response) => {
         {
           model: Topic,
           as: "topic",
-          attributes: ["name"],
+          attributes: ["id", "name", "slug"],
         },
       ],
       raw: true,
+      nest: true,
     });
 
     const coursesWithStudentCount = await Promise.all(
       courses.map(async (course: any) => {
-        let { createdAt, "topic.name": topic, ...rest } = course;
+        let { createdAt, ...rest } = course;
         createdAt = changeTime(createdAt);
         const studentCount = await CourseSub.count({
           where: { course_id: course.id },
         });
         return {
           ...rest,
-          topic,
           createdAt,
           studentCount,
         };
@@ -202,23 +202,21 @@ export const DetailCourse = async (req: Request, res: Response) => {
         "type",
         "createdAt",
       ],
-      include: [{ model: Topic, as: "topic", attributes: ["name"] }],
+      include: [
+        { model: Topic, as: "topic", attributes: ["id", "name", "slug"] },
+      ],
       raw: true,
+      nest: true,
     });
     const user = (req as any).user;
     if (!course) {
       return res.status(404).json("Khóa học không tồn tại!");
     }
-    const { "topic.name": topic, ...rest } = course as any;
     const studentCount = await CourseSub.count({
       where: { course_id: course.id },
     });
     const totalLesson = await Lesson.count({ where: { course_id: course.id } });
-    // const result = await CourseSub.findOne({
-    //   attributes: [[fn("AVG", col("rate")), "averageRate"]],
-    //   where: { course_id: course.id },
-    // });
-    let data: any = { ...rest, topic, studentCount, totalLesson };
+    let data: any = { ...course, studentCount, totalLesson };
     if (user.role == 0) {
       const subscribe = await CourseSub.findOne({
         where: { course_id: course.id, student_id: user.id },
