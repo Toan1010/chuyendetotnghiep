@@ -295,7 +295,7 @@ export const CourseReview = async (req: Request, res: Response) => {
         {
           model: Student,
           as: "student_sub",
-          attributes: ["fullName"],
+          attributes: ["id", "fullName"],
         },
       ],
       order: [["rate", "DESC"]],
@@ -304,9 +304,9 @@ export const CourseReview = async (req: Request, res: Response) => {
 
     // Định dạng các đánh giá
     const formatReview = reviews.map((review: any) => {
-      let { createdAt, "student_sub.fullName": fullName, ...rest } = review;
+      let { createdAt, ...rest } = review;
       createdAt = changeTime(createdAt);
-      return { ...rest, fullName, createdAt };
+      return { ...rest, createdAt };
     });
 
     // Tính trung bình cộng của rate
@@ -361,7 +361,7 @@ export const MyCourse = async (req: Request, res: Response) => {
         {
           model: Topic,
           as: "topic",
-          attributes: ["name"],
+          attributes: ["id", "name", "slug"],
         },
         {
           model: CourseSub,
@@ -372,25 +372,19 @@ export const MyCourse = async (req: Request, res: Response) => {
           },
         },
       ],
+      nest: true,
       raw: true,
     });
     const coursesWithStudentCount = await Promise.all(
       courses.map(async (course: any) => {
-        let {
-          createdAt,
-          "topic.name": topic,
-          topic_id,
-          "subscribed_course.process": process,
-          ...rest
-        } = course;
+        let { createdAt, topic_id, subscribed_course, ...rest } = course;
         createdAt = changeTime(createdAt);
         const studentCount = await CourseSub.count({
           where: { course_id: course.id },
         });
         return {
           ...rest,
-          topic,
-          process,
+          process: subscribed_course.process,
           createdAt,
           studentCount,
         };
