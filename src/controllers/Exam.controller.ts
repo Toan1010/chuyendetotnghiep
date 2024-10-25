@@ -33,6 +33,7 @@ export const ListExam = async (req: Request, res: Response) => {
         "numberQuestion",
         "reDoTime",
         "submitTime",
+        "studentDid",
         "createdAt",
       ],
       where: whereCondition,
@@ -49,37 +50,11 @@ export const ListExam = async (req: Request, res: Response) => {
       raw: true,
     });
 
-    const examIds = exams.map((exam: any) => exam.id);
-    const studentDidCounts = await ExamResult.findAll({
-      where: {
-        exam_id: examIds,
-      },
-      attributes: [
-        "exam_id",
-        [
-          Sequelize.fn(
-            "COUNT",
-            Sequelize.fn("DISTINCT", Sequelize.col("student_id"))
-          ),
-          "studentDid",
-        ],
-      ],
-      group: ["exam_id"],
-      raw: true,
-    });
-
-    // Chuyển đổi kết quả thành map để dễ tra cứu
-    const studentDidMap = studentDidCounts.reduce((map: any, item: any) => {
-      map[item.exam_id] = item.studentDid;
-      return map;
-    }, {});
-
     let format = exams.map((item: any) => {
       let { createdAt, id, ...rest } = item;
       createdAt = changeTime(createdAt);
-      const studentDid = studentDidMap[id] || 0; // Nếu không có thì đặt là 0
 
-      return { id, ...rest, createdAt, studentDid };
+      return { id, ...rest, createdAt };
     });
     return res.json({ count, exams: format });
   } catch (error: any) {
@@ -278,6 +253,7 @@ export const DetailExam = async (req: Request, res: Response) => {
         "passingQuestion",
         "submitTime",
         "reDoTime",
+        "studentDid",
         "createdAt",
         "updatedAt",
       ],
@@ -646,6 +622,9 @@ export const AttendExam = async (req: Request, res: Response) => {
     if (exam.reDoTime > 0 && countDoing >= exam.reDoTime) {
       return res.status(403).json("Bạn đã hết lượt làm bài kiểm tra này!");
     }
+    if (countDoing == 0) {
+      await exam.update({ studentDid: exam.studentDid + 1 });
+    }
     const questions = await ExamQuestion.findAll({
       order: Sequelize.literal("RAND()"),
       limit: exam.numberQuestion,
@@ -751,95 +730,67 @@ export const SubmitExam = async (req: Request, res: Response) => {
   }
 };
 
-// export const ExamHaveDone = async (req: Request, res: Response) => {
-//   try {
-//     const user = (req as any).user;
-//     let { limit = 10, page = 1, key_name = "", topic_id = null } = req.query;
-    
-//     page = parseInt(page as string);
-//     limit = parseInt(limit as string);
-//     const offset = (page - 1) * limit;
+export const ExamHaveDone = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    let { limit = 10, page = 1, key_name = "", topic_id = null } = req.query;
 
-//     const topicCondition = topic_id ? { id: topic_id } : {};
+    // Parse các tham số truy vấn
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const offset = (page - 1) * limit;
 
-//     const whereCondition: any = {
-//       [Op.or]: [{ name: { [Op.like]: `%${key_name}%` } }],
-//     };
+    // Điều kiện tìm kiếm
+    const whereCondition: any = {
+      [Op.or]: [{ name: { [Op.like]: `%${key_name}%` } }],
+    };
 
-//     // Truy vấn danh sách bài kiểm tra đã làm
-//     const { count, rows: exams } = await Exam.findAndCountAll({
-//       limit,
-//       offset,
-//       attributes: [
-//         "id",
-//         "name",
-//         "slug",
-//         // "passingQuestion",
-//         // "numberQuestion",
-//         // "reDoTime",
-//         // "submitTime",
-//         "createdAt",
-//       ],
-//       where: whereCondition,
-//       include: [
-//         {
-//           model: ExamResult,
-//           as: "result_student",
-//           where: { student_id: user.id },
-//           attributes: [], 
-//           // Không cần lấy thuộc tính của ExamResult
-//         },
-//         // {
-//         //   model: Topic,
-//         //   as: "topic",
-//         //   where: topicCondition,
-//         //   attributes: ["id", "name", "slug"],
-//         // },
-//       ],
-//       group: ["exam.id"], // Nhóm theo id của Exam
-//       distinct: true,     // Đảm bảo kết quả là duy nhất
-//       nest: true,
-//       raw: true,
-//     });
+    // Kiểm tra và thêm điều kiện topic_id nếu có
+    if (topic_id) {
+      whereCondition.topic_id = topic_id;
+    }
 
-//     // Lấy danh sách exam_id từ các bài kiểm tra đã làm
-//     const examIds = exams.map((exam: any) => exam.id);
+    // Truy vấn danh sách bài kiểm tra đã làm của học sinh
+    const { count, rows: exams } = await Exam.findAndCountAll({
+      limit,
+      offset,
+      where: whereCondition,
+      include: [
+        {
+          model: ExamResult,
+          as: "result",
+          where: { student_id: user.id },
+          attributes: [],
+        },
+        {
+          model: Topic,
+          as: "topic",
+          attributes: ["id", "name", "slug"],
+        },
+      ],
+      attributes: [
+        "id",
+        "name",
+        "slug",
+        "submitTime",
+        "reDoTime",
+        "studentDid",
+        "createdAt",
+        "updatedAt",
+      ],
+      nest: true,
+      raw: true,
+    });
 
-//     // Truy vấn số lượng học sinh đã làm mỗi bài kiểm tra
-//     const studentDidCounts = await ExamResult.findAll({
-//       where: {
-//         exam_id: examIds,
-//       },
-//       attributes: [
-//         "exam_id",
-//         [
-//           Sequelize.fn(
-//             "COUNT",
-//             Sequelize.fn("DISTINCT", Sequelize.col("student_id"))
-//           ),
-//           "studentDid",
-//         ],
-//       ],
-//       group: ["exam_id"],
-//       raw: true,
-//     });
+    let format = exams.map((item: any) => {
+      let { createdAt, updatedAt, ...rest } = item;
+      createdAt = changeTime(createdAt);
+      updatedAt = changeTime(updatedAt);
+      return { ...rest, createdAt, updatedAt };
+    });
 
-//     // // Tạo một map để tra cứu số lượng học sinh đã làm từng bài kiểm tra
-//     // const studentDidMap = studentDidCounts.reduce((map: any, item: any) => {
-//     //   map[item.exam_id] = item.studentDid;
-//     //   return map;
-//     // }, {});
-
-//     // // Định dạng lại kết quả trả về
-//     // const formattedExams = exams.map((exam: any) => {
-//     //   let { createdAt, id, ...rest } = exam;
-//     //   createdAt = changeTime(createdAt); // Định dạng lại thời gian
-//     //   const studentDid = studentDidMap[id] || 0; // Nếu không có, đặt là 0
-//     //   return { id, ...rest, createdAt, studentDid };
-//     // });
-
-//     return res.json({ count, exams});
-//   } catch (error: any) {
-//     return res.status(500).json(error.message);
-//   }
-// };
+    return res.json({ count, exams: format });
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};

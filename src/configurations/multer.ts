@@ -12,6 +12,7 @@ const avatarStorage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
+
 const imageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../../public/images"));
@@ -21,6 +22,7 @@ const imageStorage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
+
 const documentStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../../public/files"));
@@ -30,6 +32,7 @@ const documentStorage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
+
 const videoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../../public/videos"));

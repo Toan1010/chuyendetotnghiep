@@ -10,6 +10,7 @@ class Exam extends Model {
   public passingQuestion!: number;
   public submitTime!: number;
   public reDoTime!: number;
+  public studentDid!: number;
   public topic_id!: number;
 }
 
@@ -55,6 +56,10 @@ Exam.init(
       validate: {
         min: 0,
       },
+    },
+    studentDid: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      defaultValue: 0,
     },
     topic_id: {
       type: DataTypes.INTEGER.UNSIGNED,

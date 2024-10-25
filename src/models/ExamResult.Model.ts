@@ -60,7 +60,7 @@ ExamResult.init(
 ExamResult.belongsTo(Student, { foreignKey: "student_id", as: "student" });
 ExamResult.belongsTo(Exam, { foreignKey: "exam_id", as: "exam" });
 
-Student.hasMany(ExamResult, { foreignKey: "student_id", as: "result_exam" });
-Exam.hasMany(ExamResult, { foreignKey: "exam_id", as: "result_student" });
+Student.hasMany(ExamResult, { foreignKey: "student_id", as: "result" });
+Exam.hasMany(ExamResult, { foreignKey: "exam_id", as: "result" });
 
 export default ExamResult;
