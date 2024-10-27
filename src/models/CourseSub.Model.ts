@@ -56,9 +56,12 @@ CourseSub.init(
 );
 
 Course.hasMany(CourseSub, { foreignKey: "course_id", as: "subscribed_course" });
-Student.hasMany(CourseSub, { foreignKey: "student_id", as: "subscribed_student" });
+Student.hasMany(CourseSub, {
+  foreignKey: "student_id",
+  as: "subscribed_student",
+});
 
 CourseSub.belongsTo(Course, { foreignKey: "course_id", as: "course_sub" });
-CourseSub.belongsTo(Student, { foreignKey: "student_id", as: "student_sub" });
+CourseSub.belongsTo(Student, { foreignKey: "student_id", as: "student" });
 
 export default CourseSub;

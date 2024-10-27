@@ -146,13 +146,13 @@ export const ListStudentAttend = async (req: Request, res: Response) => {
 
 export const AllExamResult = async (req: Request, res: Response) => {
   try {
-    const exam_id = req.params.exam_id;
+    const slug = req.params.slug;
     let { limit = 10, page = 1, key_name = "", student_id } = req.query;
     page = parseInt(page as string);
     limit = parseInt(limit as string);
     const offset = (page - 1) * limit;
 
-    const exam = await Exam.findByPk(exam_id);
+    const exam = await Exam.findOne({ where: { slug } });
 
     if (!exam) {
       return res.status(404).json("Bài kiểm tra không tồn tại");
@@ -160,7 +160,7 @@ export const AllExamResult = async (req: Request, res: Response) => {
 
     const user = (req as any).user;
     let whereCondition: any = {
-      exam_id,
+      exam: exam.id,
     };
 
     // Kiểm tra role của người dùng
@@ -180,7 +180,7 @@ export const AllExamResult = async (req: Request, res: Response) => {
       offset,
       where: whereCondition,
       attributes: ["id", "correctAns", "createdAt", "submitAt"],
-      order: [["submitAt", "DESC"]],
+      order: [["id", "DESC"]],
       include: [
         {
           model: Student,

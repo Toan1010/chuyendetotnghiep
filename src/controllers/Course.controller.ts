@@ -294,11 +294,12 @@ export const CourseReview = async (req: Request, res: Response) => {
       include: [
         {
           model: Student,
-          as: "student_sub",
+          as: "student",
           attributes: ["id", "fullName"],
         },
       ],
       order: [["rate", "DESC"]],
+      nest: true,
       raw: true, // Chuyển kết quả thành plain object để tránh cấu trúc tuần hoàn
     });
 

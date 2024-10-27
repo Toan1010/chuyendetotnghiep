@@ -10,11 +10,11 @@ export const GetListTopic = async (req: Request, res: Response) => {
     const { count, rows: topics } = await Topic.findAndCountAll({
       where: {
         name: {
-          [Op.like]: `%${key_name}%`, 
+          [Op.like]: `%${key_name}%`,
         },
       },
       attributes: ["id", "name", "description", "slug"],
-      order: [["name", "ASC"]], 
+      order: [["name", "ASC"]],
     });
 
     return res.json({ count, topics });
@@ -65,6 +65,19 @@ export const DeleteTopic = async (req: Request, res: Response) => {
     }
     await topic.destroy();
     return res.json("Xoá topic thành công!");
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
+
+export const DetailTopic = async (req: Request, res: Response) => {
+  try {
+    const slug = req.params.slug;
+    const topic = await Topic.findOne({ where: { slug }, raw: true });
+    if (!topic) {
+      return res.json(404).json("Chủ đề không tồn tại!");
+    }
+    return res.json(topic);
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
