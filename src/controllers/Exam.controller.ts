@@ -160,7 +160,7 @@ export const AllExamResult = async (req: Request, res: Response) => {
 
     const user = (req as any).user;
     let whereCondition: any = {
-      exam: exam.id,
+      exam_id: exam.id,
     };
 
     // Kiểm tra role của người dùng
