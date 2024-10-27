@@ -225,7 +225,7 @@ export const DetailResultExam = async (req: Request, res: Response) => {
     if (!result) {
       return res.status(404).json("Kết quả bài làm không tồn tại!");
     }
-    if (user.role === 0 && result?.student_id !== user.id) {
+    if (user.role == 0 && (result as any).student.id != user.id) {
       return res.status(403).json("Bài làm không phải của bạn!");
     }
     let { detailResult, submitAt, createdAt, ...rest } = result as any;
