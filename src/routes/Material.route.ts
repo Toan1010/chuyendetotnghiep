@@ -4,7 +4,7 @@ import { verifyAccessToken, verifyCanCourse } from "../middlewares/authenticatio
 
 const router: Router = express.Router();
 
-router.get("/list-lesson/:course_id", verifyAccessToken, Material.ListLesson);
+router.get("/list-lesson/:course_slug", verifyAccessToken, Material.ListLesson);
 router.post("/create-lesson/:course_id", verifyCanCourse, Material.CreateLesson);
 router.put("/update-lesson/:lesson_id", verifyCanCourse, Material.UpdateLesson);
 router.delete("/delete-lesson/:lesson_id", verifyCanCourse, Material.DeleteLesson);

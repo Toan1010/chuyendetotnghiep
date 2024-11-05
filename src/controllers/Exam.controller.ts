@@ -229,12 +229,14 @@ export const DetailResultExam = async (req: Request, res: Response) => {
       return res.status(403).json("Bài làm không phải của bạn!");
     }
     let { detailResult, submitAt, createdAt, ...rest } = result as any;
+
     detailResult =
       typeof detailResult === "string"
         ? JSON.parse(detailResult)
         : detailResult;
     createdAt = changeTime(createdAt);
     submitAt = changeTime(submitAt);
+
     return res.json({ ...rest, detailResult, createdAt, submitAt });
   } catch (error: any) {
     return res.status(500).json(error.message);
@@ -707,14 +709,14 @@ export const SubmitExam = async (req: Request, res: Response) => {
         : result.detailResult;
 
     const newDetail: any = checks.map((check: any, index: number) => {
-      let { answer, correctAnswer, ...rest } = check;
+      let { answer, correctAns, ...rest } = check;
       let userAns = answers[index]?.selectedAns;
       if (userAns) {
-        const isTrue = _.difference(userAns, correctAnswer).length === 0;
+        const isTrue = _.difference(userAns, correctAns).length === 0;
         score += isTrue ? 1 : 0;
       }
       answer = userAns ? userAns : [];
-      return { answer, correctAnswer, ...rest };
+      return { answer, correctAns, ...rest };
     });
 
     await result.update({
@@ -733,7 +735,13 @@ export const SubmitExam = async (req: Request, res: Response) => {
 export const ExamHaveDone = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    let { limit = 10, page = 1, key_name = "", topic_id = null } = req.query;
+    let {
+      limit = 10,
+      page = 1,
+      key_name = "",
+      topic_id = null,
+      student_id,
+    } = req.query;
 
     // Parse các tham số truy vấn
     page = parseInt(page as string);
@@ -749,8 +757,14 @@ export const ExamHaveDone = async (req: Request, res: Response) => {
     if (topic_id) {
       whereCondition.topic_id = topic_id;
     }
+    if (user.role === 0) {
+      student_id = user.id;
+    } else {
+      if (!student_id) {
+        return res.status(400).json("Chọn sinh viên muốn xem");
+      }
+    }
 
-    // Truy vấn danh sách bài kiểm tra đã làm của học sinh
     const { count, rows: exams } = await Exam.findAndCountAll({
       limit,
       offset,
@@ -759,7 +773,7 @@ export const ExamHaveDone = async (req: Request, res: Response) => {
         {
           model: ExamResult,
           as: "result",
-          where: { student_id: user.id },
+          where: { student_id },
           attributes: [],
         },
         {
@@ -778,18 +792,15 @@ export const ExamHaveDone = async (req: Request, res: Response) => {
         "createdAt",
         "updatedAt",
       ],
-      nest: true,
-      raw: true,
+      group: ["Exam.id"],
     });
-
     let format = exams.map((item: any) => {
-      let { createdAt, updatedAt, ...rest } = item;
+      let { createdAt, updatedAt, ...rest } = item.get({ plain: true });
       createdAt = changeTime(createdAt);
       updatedAt = changeTime(updatedAt);
       return { ...rest, createdAt, updatedAt };
     });
-
-    return res.json({ count, exams: format });
+    return res.json({count: count.length, exams: format });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }

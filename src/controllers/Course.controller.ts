@@ -201,6 +201,7 @@ export const DetailCourse = async (req: Request, res: Response) => {
         "thumbnail",
         "type",
         "createdAt",
+        "updatedAt",
       ],
       include: [
         { model: Topic, as: "topic", attributes: ["id", "name", "slug"] },
@@ -215,8 +216,17 @@ export const DetailCourse = async (req: Request, res: Response) => {
     const studentCount = await CourseSub.count({
       where: { course_id: course.id },
     });
+    let { createdAt, updatedAt } = course as any;
+    createdAt = changeTime(createdAt);
+    updatedAt = changeTime(updatedAt);
     const totalLesson = await Lesson.count({ where: { course_id: course.id } });
-    let data: any = { ...course, studentCount, totalLesson };
+    let data: any = {
+      ...course,
+      createdAt,
+      updatedAt,
+      studentCount,
+      totalLesson,
+    };
     if (user.role == 0) {
       const subscribe = await CourseSub.findOne({
         where: { course_id: course.id, student_id: user.id },
@@ -342,7 +352,13 @@ export const CourseReview = async (req: Request, res: Response) => {
 
 export const MyCourse = async (req: Request, res: Response) => {
   try {
-    let { limit = 10, page = 1, key_name = "", topic_id } = req.query;
+    let {
+      limit = 10,
+      page = 1,
+      key_name = "",
+      topic_id,
+      student_id,
+    } = req.query;
     page = parseInt(page as string);
     limit = parseInt(limit as string);
     const offset = (page - 1) * limit;
@@ -350,6 +366,14 @@ export const MyCourse = async (req: Request, res: Response) => {
       [Op.or]: [{ name: { [Op.like]: `%${key_name}%` } }],
     };
     const user = (req as any).user;
+    if (user.role === 0) {
+      student_id = user.id;
+    } else {
+      if (!student_id) {
+        return res.status(400).json("Chọn sinh viên muốn xem");
+      }
+    }
+
     if (topic_id) {
       whereCondition.topic_id = topic_id;
     }
@@ -369,7 +393,7 @@ export const MyCourse = async (req: Request, res: Response) => {
           attributes: ["process"],
           as: "subscribed_course",
           where: {
-            student_id: user.id,
+            student_id,
           },
         },
       ],

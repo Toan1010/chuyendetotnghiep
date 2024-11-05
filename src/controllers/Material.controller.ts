@@ -18,9 +18,17 @@ import CourseSub from "../models/CourseSub.Model";
 
 export const ListLesson = async (req: Request, res: Response) => {
   try {
-    const id = req.params.course_id;
+    const slug = req.params.course_slug;
+    const course = await Course.findOne({
+      where: {
+        slug: slug,
+      },
+    });
+    if (!course) {
+      return res.status(404).json("Khóa học không tồn tại!");
+    }
     const { count: totalLesson, rows: lessons } = await Lesson.findAndCountAll({
-      where: { course_id: id },
+      where: { course_id: course.id },
       attributes: ["id", "name", "description", "inCourse", "context"],
       order: [["inCourse", "ASC"]],
     });
