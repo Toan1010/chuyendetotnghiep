@@ -213,11 +213,15 @@ export const DetailResultExam = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const result_id = req.params.result_id;
-    const result = await ExamResult.findByPk(result_id, {
+    const result: any = await ExamResult.findByPk(result_id, {
       attributes: ["id", "correctAns", "detailResult", "createdAt", "submitAt"],
       include: [
         { model: Student, as: "student", attributes: ["id", "fullName"] },
-        { model: Exam, as: "exam", attributes: ["id", "name", "slug"] },
+        {
+          model: Exam,
+          as: "exam",
+          attributes: ["id", "name", "slug", "submitTime"],
+        },
       ],
       raw: true,
       nest: true,
@@ -228,6 +232,38 @@ export const DetailResultExam = async (req: Request, res: Response) => {
     if (user.role == 0 && (result as any).student.id != user.id) {
       return res.status(403).json("Bài làm không phải của bạn!");
     }
+
+    const currentTime = Date.now();
+    const examEndTime =
+      new Date(result.createdAt).getTime() + result.exam.submitTime * 60 * 1000;
+
+    if (!result.submitAt && currentTime > examEndTime) {
+      // Parse detailResult if it’s stored as a string
+      let updatedDetailResult =
+        typeof result.detailResult === "string"
+          ? JSON.parse(result.detailResult)
+          : result.detailResult;
+
+      // Automatically submit the exam if the deadline has passed
+      updatedDetailResult = updatedDetailResult.map((check: any) => ({
+        ...check,
+        answer: [],
+      }));
+
+      await ExamResult.update(
+        {
+          correctAns: 0,
+          detailResult: updatedDetailResult,
+          submitAt: examEndTime,
+        },
+        { where: { id: result_id } }
+      );
+
+      result.submitAt = examEndTime;
+      result.correctAns = 0;
+      result.detailResult = updatedDetailResult;
+    }
+
     let { detailResult, submitAt, createdAt, ...rest } = result as any;
 
     detailResult =
@@ -723,9 +759,11 @@ export const SubmitExam = async (req: Request, res: Response) => {
     const newDetail: any = checks.map((check: any, index: number) => {
       let { answer, correctAns, ...rest } = check;
       let userAns = answers[index]?.selectedAns;
-      if (userAns) {
+      if (!_.isEmpty(userAns)) {
         const isTrue = _.difference(userAns, correctAns).length === 0;
         score += isTrue ? 1 : 0;
+      } else {
+        score += 0;
       }
       answer = userAns ? userAns : [];
       return { answer, correctAns, ...rest };
