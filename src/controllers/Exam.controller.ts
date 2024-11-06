@@ -199,7 +199,7 @@ export const AllExamResult = async (req: Request, res: Response) => {
       let { createdAt, submitAt, correctAns, ...rest } = result;
       let point = (correctAns * 10) / exam.numberQuestion;
       createdAt = changeTime(createdAt); // Định dạng lại thời gian
-      submitAt = changeTime(submitAt);
+      submitAt = submitAt ? changeTime(submitAt) : "";
       return { ...rest, point, correctAns, createdAt, submitAt };
     });
 
@@ -235,7 +235,7 @@ export const DetailResultExam = async (req: Request, res: Response) => {
         ? JSON.parse(detailResult)
         : detailResult;
     createdAt = changeTime(createdAt);
-    submitAt = changeTime(submitAt);
+    submitAt = submitAt ? changeTime(submitAt) : "";
 
     return res.json({ ...rest, detailResult, createdAt, submitAt });
   } catch (error: any) {
@@ -621,6 +621,18 @@ export const AttendExam = async (req: Request, res: Response) => {
         student_id: user.id,
       },
     });
+    const isAttendNow = await ExamResult.findOne({
+      where: {
+        student_id: user.id,
+        exam_id: exam.id,
+        submitAt: null,
+      },
+    });
+    if (isAttendNow) {
+      return res
+        .status(401)
+        .json("Vui lòng hoàn thành bài thi hiện tại trước!");
+    }
     if (exam.reDoTime > 0 && countDoing >= exam.reDoTime) {
       return res.status(403).json("Bạn đã hết lượt làm bài kiểm tra này!");
     }
@@ -800,7 +812,7 @@ export const ExamHaveDone = async (req: Request, res: Response) => {
       updatedAt = changeTime(updatedAt);
       return { ...rest, createdAt, updatedAt };
     });
-    return res.json({count: count.length, exams: format });
+    return res.json({ count: count.length, exams: format });
   } catch (error: any) {
     return res.status(500).json(error.message);
   }
