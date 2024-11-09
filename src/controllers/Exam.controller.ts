@@ -11,6 +11,7 @@ import { changeTime } from "../helpers/formatTime";
 import Student from "../models/Student.Model";
 import _ from "lodash";
 import { convertString } from "../helpers/convertToSlug";
+import { isEqualArrays } from "../helpers/checkCorrect";
 
 export const ListExam = async (req: Request, res: Response) => {
   try {
@@ -762,7 +763,7 @@ export const SubmitExam = async (req: Request, res: Response) => {
       let { answer, correctAns, ...rest } = check;
       let userAns = answers[index]?.selectedAns;
       if (userAns && userAns.length > 0) {
-        const isTrue = _.difference(userAns, correctAns).length === 0;
+        const isTrue = isEqualArrays(userAns, correctAns);
         score += isTrue ? 1 : 0;
       }
       answer = userAns || [];
@@ -774,14 +775,21 @@ export const SubmitExam = async (req: Request, res: Response) => {
       detailResult: JSON.stringify(newDetail),
       submitAt: currentTime,
     });
+    let { detailResult, submitAt, createdAt, ...rest } = result.dataValues as any;
 
-    return res.json({ result });
+    detailResult =
+      typeof detailResult === "string"
+        ? JSON.parse(detailResult)
+        : detailResult;
+    createdAt = changeTime(createdAt);
+    submitAt = submitAt ? changeTime(submitAt) : "";
+
+    return res.json({ ...rest, detailResult, createdAt, submitAt });
   } catch (error: any) {
     console.log(error);
     return res.status(500).json(error.message);
   }
 };
-
 
 export const ExamHaveDone = async (req: Request, res: Response) => {
   try {
