@@ -9,7 +9,7 @@ router.post("/create-lesson/:course_id", verifyCanCourse, Material.CreateLesson)
 router.put("/update-lesson/:lesson_id", verifyCanCourse, Material.UpdateLesson);
 router.delete("/delete-lesson/:lesson_id", verifyCanCourse, Material.DeleteLesson);
 
-router.get("/list-document/:course_id", verifyAccessToken, Material.ListDoc);
+router.get("/list-document/:course_slug", verifyAccessToken, Material.ListDoc);
 router.post("/create-document/:course_id", verifyCanCourse, Material.CreateDoc);
 router.put("/update-document/:doc_id", verifyCanCourse, Material.UpdateDoc);
 router.delete("/delete-document/:doc_id", verifyCanCourse, Material.DeleteDoc);

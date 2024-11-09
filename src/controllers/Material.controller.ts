@@ -18,6 +18,7 @@ import CourseSub from "../models/CourseSub.Model";
 
 export const ListLesson = async (req: Request, res: Response) => {
   try {
+    const user = (req as any).user;
     const slug = req.params.course_slug;
     const course = await Course.findOne({
       where: {
@@ -27,9 +28,13 @@ export const ListLesson = async (req: Request, res: Response) => {
     if (!course) {
       return res.status(404).json("Khóa học không tồn tại!");
     }
+    let attributes: string[] = ["id", "name", "description", "inCourse"];
+    if (user.role != 0) {
+      attributes.push("context");
+    }
     const { count: totalLesson, rows: lessons } = await Lesson.findAndCountAll({
       where: { course_id: course.id },
-      attributes: ["id", "name", "description", "inCourse", "context"],
+      attributes,
       order: [["inCourse", "ASC"]],
     });
     return res.json({ totalLesson, lessons });
@@ -148,9 +153,29 @@ export const DeleteLesson = async (req: Request, res: Response) => {
 
 export const ListDoc = async (req: Request, res: Response) => {
   try {
-    const id = req.params.course_id;
+    const slug = req.params.course_slug;
+    const user = (req as any).user;
+    const course = await Course.findOne({ where: { slug } });
+    if (!course) {
+      return res.status(404).json("Khóa học không tồn tại!");
+    }
+    let attributes: string[] = ["id", "name", "createdAt"];
+    if (user.role != 0) {
+      attributes.push("context");
+    } else {
+      const sub = await CourseSub.findOne({
+        where: {
+          course_id: course.id,
+          student_id: user.id,
+        },
+      });
+      if (sub) {
+        attributes.push("context");
+      }
+    }
+
     const { count: totalDocs, rows: docs } = await Document.findAndCountAll({
-      where: { course_id: id },
+      where: { course_id: course.id },
       attributes: ["id", "name", "context", "createdAt"],
       order: [["createdAt", "ASC"]],
     });

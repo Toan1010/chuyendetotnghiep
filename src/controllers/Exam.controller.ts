@@ -733,20 +733,22 @@ export const SubmitExam = async (req: Request, res: Response) => {
     const currentTime = Date.now();
     const examEndTime =
       new Date((result as any).createdAt).getTime() +
-      (exam as any).submitTime * 60 * 1000; // Chuyển submitTime từ phút sang milliseconds
+      (exam as any).submitTime * 60 * 1000;
 
     if (currentTime > examEndTime) {
       // Nếu quá thời gian, mặc định tất cả câu trả lời rỗng
       await result.update({
         correctAns: 0,
-        detailResult: result.detailResult.map((check: any) => ({
-          ...check,
-          answer: [],
-        })),
+        detailResult: result?.detailResult
+          ? JSON.parse((result as any).detailResult).map((check: any) => ({
+              ...check,
+              answer: [],
+            }))
+          : [],
         submitAt: currentTime,
       });
 
-      return res.status(403).json("Đã quá thời gian nộp bài> ");
+      return res.status(403).json("Đã quá thời gian nộp bài.");
     }
 
     const { answers } = req.body;
@@ -754,24 +756,22 @@ export const SubmitExam = async (req: Request, res: Response) => {
     let checks =
       typeof result.detailResult === "string"
         ? JSON.parse(result.detailResult)
-        : result.detailResult;
+        : result.detailResult || [];
 
-    const newDetail: any = checks.map((check: any, index: number) => {
+    const newDetail = checks.map((check: any, index: number) => {
       let { answer, correctAns, ...rest } = check;
       let userAns = answers[index]?.selectedAns;
-      if (!_.isEmpty(userAns)) {
+      if (userAns && userAns.length > 0) {
         const isTrue = _.difference(userAns, correctAns).length === 0;
         score += isTrue ? 1 : 0;
-      } else {
-        score += 0;
       }
-      answer = userAns ? userAns : [];
+      answer = userAns || [];
       return { answer, correctAns, ...rest };
     });
 
     await result.update({
       correctAns: score,
-      detailResult: newDetail,
+      detailResult: JSON.stringify(newDetail),
       submitAt: currentTime,
     });
 
@@ -781,6 +781,7 @@ export const SubmitExam = async (req: Request, res: Response) => {
     return res.status(500).json(error.message);
   }
 };
+
 
 export const ExamHaveDone = async (req: Request, res: Response) => {
   try {
