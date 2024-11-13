@@ -778,7 +778,7 @@ export const SubmitExam = async (req: Request, res: Response) => {
 
     await result.update({
       correctAns: score,
-      detailResult: JSON.stringify(newDetail),
+      detailResult: newDetail,
       submitAt: currentTime,
     });
     let { detailResult, submitAt, createdAt, ...rest } =
