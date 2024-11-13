@@ -15,6 +15,7 @@ import Lesson from "../models/Lesson.Model";
 import Document from "../models/Documents.Model";
 import path from "path";
 import CourseSub from "../models/CourseSub.Model";
+import { changeTime } from "../helpers/formatTime";
 
 export const ListLesson = async (req: Request, res: Response) => {
   try {
@@ -173,11 +174,16 @@ export const ListDoc = async (req: Request, res: Response) => {
         attributes.push("context");
       }
     }
-
-    const { count: totalDocs, rows: docs } = await Document.findAndCountAll({
+    let { count: totalDocs, rows: docs } = await Document.findAndCountAll({
       where: { course_id: course.id },
       attributes: ["id", "name", "context", "createdAt"],
       order: [["createdAt", "ASC"]],
+      raw: true,
+    });
+    docs = docs.map((item: any) => {
+      let { createdAt, ...rest } = item;
+      createdAt = changeTime(createdAt);
+      return { ...rest, createdAt };
     });
     return res.json({ totalDocs, docs });
   } catch (error: any) {

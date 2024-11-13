@@ -272,6 +272,12 @@ export const DetailResultExam = async (req: Request, res: Response) => {
         ? JSON.parse(detailResult)
         : detailResult;
     createdAt = changeTime(createdAt);
+    if (!submitAt) {
+      detailResult = detailResult?.map((item: any) => {
+        let { correctAns, ...rest } = item;
+        return rest;
+      });
+    }
     submitAt = submitAt ? changeTime(submitAt) : "";
 
     return res.json({ ...rest, detailResult, createdAt, submitAt });
@@ -775,7 +781,8 @@ export const SubmitExam = async (req: Request, res: Response) => {
       detailResult: JSON.stringify(newDetail),
       submitAt: currentTime,
     });
-    let { detailResult, submitAt, createdAt, ...rest } = result.dataValues as any;
+    let { detailResult, submitAt, createdAt, ...rest } =
+      result.dataValues as any;
 
     detailResult =
       typeof detailResult === "string"
