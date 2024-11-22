@@ -10,6 +10,7 @@ const router: Router = express.Router();
 
 router.post("/forgot_password/", Student.ForgotPassword);
 router.post("/forgot_password/:id/", Student.ResetPassword);
+router.get("/forgot_password/:reset/", Student.VerifyResetstring);
 
 router.get("/list/", verifyAdmin, Student.GetListStudent);
 router.get("/detail/:id", verifyCanStudent, Student.DetailInfo);

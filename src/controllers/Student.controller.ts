@@ -272,3 +272,22 @@ export const DeleteStudent = async (req: Request, res: Response) => {
     return res.json(error.message);
   }
 };
+
+export const VerifyResetstring = async (req: Request, res: Response) => {
+  try {
+    const resetString = req.params.reset;
+    if (!ResetPasswordlist.includes(resetString)) {
+      return res.status(403).json("Yêu cầu làm mới bị lỗi!");
+    }
+    const { email, expired } = decryptString(resetString);
+    if (new Date() > new Date(expired)) {
+      ResetPasswordlist = ResetPasswordlist.filter(
+        (token) => token !== resetString
+      );
+      return res.status(400).json("Yêu cầu làm mới đã hết hạn!");
+    }
+    return res.json(email);
+  } catch (error: any) {
+    return res.status(500).json(error.message);
+  }
+};
