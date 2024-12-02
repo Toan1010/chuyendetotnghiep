@@ -3,6 +3,7 @@ export interface DetailResult {
   name: string;
   type: string;
   choice: string[];
+  isCorrect: boolean;
   correctAnswer: string[];
   answer: string[];
 }

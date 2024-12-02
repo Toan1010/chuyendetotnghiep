@@ -124,7 +124,7 @@ export const TakeSurvey = async (req: Request, res: Response) => {
         if (existingQuestion) {
           let yesCount = existingQuestion.yes;
           let noCount = existingQuestion.no;
-          answer === "yes" ? (yesCount += 1) : (noCount += 1);
+          answer ? (yesCount += 1) : (noCount += 1);
           await SurveyQuestion.update(
             { yes: yesCount, no: noCount },
             { where: { id, survey_id } }

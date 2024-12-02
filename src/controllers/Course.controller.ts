@@ -39,6 +39,7 @@ export const GetListCourse = async (req: Request, res: Response) => {
           attributes: ["id", "name", "slug"],
         },
       ],
+      order: [["id", "DESC"]],
       raw: true,
       nest: true,
     });
@@ -130,7 +131,7 @@ export const UpdateCourse = async (req: Request, res: Response) => {
         thumbnail,
         slug,
       });
-      if (req.file?.filename) {
+      if (req.file?.filename && !oldthumbnailPath.includes("course.jpg")) {
         try {
           await fs.unlink(oldthumbnailPath);
         } catch (error: any) {

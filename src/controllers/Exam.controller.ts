@@ -180,7 +180,7 @@ export const AllExamResult = async (req: Request, res: Response) => {
       limit,
       offset,
       where: whereCondition,
-      attributes: ["id", "correctAns", "createdAt", "submitAt"],
+      attributes: ["id", "isPass", "correctAns", "createdAt", "submitAt"],
       order: [["id", "DESC"]],
       include: [
         {
@@ -341,7 +341,7 @@ export const CreateExam = async (req: Request, res: Response) => {
     if (passingQuestion <= 0 || passingQuestion > numberQuestion) {
       return res.status(400).json("Câu trả lời đúng tối thiểu không hợp lệ!");
     }
-    submitTime < 10 ? 10 : submitTime;
+    submitTime <= 20 ? 20 : submitTime;
     reDoTime < 0 ? 0 : reDoTime;
     const slug = convertString(name);
 
@@ -696,7 +696,8 @@ export const AttendExam = async (req: Request, res: Response) => {
       correctAns = correctAns =
         typeof correctAns === "string" ? JSON.parse(correctAns) : correctAns;
       let answer: string[] = [];
-      return { ...rest, choice, correctAns, answer };
+      let isCorrect: boolean = false;
+      return { ...rest, choice, correctAns, answer, isCorrect };
     });
     const dataQuestion = questions.map((question: any) => {
       let { choice, correctAns, ...rest } = question;
@@ -735,7 +736,9 @@ export const SubmitExam = async (req: Request, res: Response) => {
     }
 
     const exam = await Exam.findByPk(result.exam_id);
-
+    if (!exam) {
+      return res.status(404).json("Bài thi không tồn tại!");
+    }
     // Kiểm tra thời gian hiện tại và thời gian nộp bài
     const currentTime = Date.now();
     const examEndTime =
@@ -766,17 +769,23 @@ export const SubmitExam = async (req: Request, res: Response) => {
         : result.detailResult || [];
 
     const newDetail = checks.map((check: any, index: number) => {
-      let { answer, correctAns, ...rest } = check;
+      let { answer, correctAns, isCorrect, ...rest } = check;
       let userAns = answers[index]?.selectedAns;
+
       if (userAns && userAns.length > 0) {
         const isTrue = isEqualArrays(userAns, correctAns);
         score += isTrue ? 1 : 0;
+        isCorrect = isTrue;
+        console.log(isCorrect, 779);
       }
       answer = userAns || [];
-      return { answer, correctAns, ...rest };
+      return { answer, correctAns, isCorrect, ...rest };
     });
 
+    let isPass: boolean = score >= exam.passingQuestion;
+
     await result.update({
+      isPass,
       correctAns: score,
       detailResult: newDetail,
       submitAt: currentTime,

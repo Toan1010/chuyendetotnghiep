@@ -26,10 +26,10 @@ router.post("/create/", verifyCanExam,ExamController.CreateExam);
 router.put("/update/:exam_id", verifyCanExam,ExamController.UpdateExam);
 router.delete("/delete/:exam_id", verifyCanExam,ExamController.DeleteExam);
 
-router.post("/add-questions/:exam_id", verifyCanExam,ExamController.AddQuestions);
-router.post("/add-question/:exam_id", verifyCanExam,ExamController.AddQuestion);
-router.get("/detail-question/:question_id", verifyCanExam,ExamController.DetailQuestion);
-router.put("/update-question/:question_id", verifyCanExam,ExamController.UpdateQuestion);
-router.delete("/delete-question/:question_id", verifyCanExam,ExamController.DeleteQuestion);
+router.post("/add-questions/:exam_id", verifyCanExam, ExamController.AddQuestions);
+router.post("/add-question/:exam_id", verifyCanExam, ExamController.AddQuestion);
+router.get("/detail-question/:question_id", verifyCanExam, ExamController.DetailQuestion);
+router.put("/update-question/:question_id", verifyCanExam, ExamController.UpdateQuestion);
+router.delete("/delete-question/:question_id", verifyCanExam, ExamController.DeleteQuestion);
 
 export default router;

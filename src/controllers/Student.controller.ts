@@ -28,7 +28,7 @@ export const GetListStudent = async (req: Request, res: Response) => {
       limit,
       offset,
       where: whereCondition,
-      attributes: ["id", "fullName", "email", "status", "createdAt"],
+      attributes: ["id", "fullName", "email", "status", "avatar", "createdAt"],
       order: [["id", orderDirection]],
     });
     return res.json({ count, students });

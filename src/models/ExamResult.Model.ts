@@ -7,6 +7,7 @@ import Exam from "./Exam.Model";
 class ExamResult extends Model {
   public id!: number;
   public student_id!: number;
+  public isPass!: boolean;
   public exam_id!: number;
   public correctAns!: number;
   public detailResult!: DetailResult[];
@@ -39,6 +40,10 @@ ExamResult.init(
       },
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
+    },
+    isPass: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     correctAns: {
       type: DataTypes.INTEGER.UNSIGNED,
