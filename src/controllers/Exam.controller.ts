@@ -180,7 +180,14 @@ export const AllExamResult = async (req: Request, res: Response) => {
       limit,
       offset,
       where: whereCondition,
-      attributes: ["id", "isPass", "correctAns", "createdAt", "submitAt"],
+      attributes: [
+        "id",
+        "isPass",
+        "point",
+        "correctAns",
+        "createdAt",
+        "submitAt",
+      ],
       order: [["id", "DESC"]],
       include: [
         {
@@ -197,11 +204,10 @@ export const AllExamResult = async (req: Request, res: Response) => {
     });
 
     const format = results.map((result: any) => {
-      let { createdAt, submitAt, correctAns, ...rest } = result;
-      let point = (correctAns * 10) / exam.numberQuestion;
+      let { createdAt, submitAt, ...rest } = result;
       createdAt = changeTime(createdAt); // Định dạng lại thời gian
       submitAt = submitAt ? changeTime(submitAt) : "";
-      return { ...rest, point, correctAns, createdAt, submitAt };
+      return { ...rest, createdAt, submitAt };
     });
 
     return res.json({ count, results: format });
@@ -215,7 +221,15 @@ export const DetailResultExam = async (req: Request, res: Response) => {
     const user = (req as any).user;
     const result_id = req.params.result_id;
     const result: any = await ExamResult.findByPk(result_id, {
-      attributes: ["id", "correctAns", "detailResult", "createdAt", "submitAt"],
+      attributes: [
+        "id",
+        "correctAns",
+        "point",
+        "isPass",
+        "detailResult",
+        "createdAt",
+        "submitAt",
+      ],
       include: [
         { model: Student, as: "student", attributes: ["id", "fullName"] },
         {
@@ -776,15 +790,16 @@ export const SubmitExam = async (req: Request, res: Response) => {
         const isTrue = isEqualArrays(userAns, correctAns);
         score += isTrue ? 1 : 0;
         isCorrect = isTrue;
-        console.log(isCorrect, 779);
       }
       answer = userAns || [];
       return { answer, correctAns, isCorrect, ...rest };
     });
 
     let isPass: boolean = score >= exam.passingQuestion;
+    let point: number = (score / exam.numberQuestion) * 10;
 
     await result.update({
+      point,
       isPass,
       correctAns: score,
       detailResult: newDetail,

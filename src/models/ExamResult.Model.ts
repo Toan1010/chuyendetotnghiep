@@ -6,9 +6,10 @@ import Exam from "./Exam.Model";
 
 class ExamResult extends Model {
   public id!: number;
+  public exam_id!: number;
   public student_id!: number;
   public isPass!: boolean;
-  public exam_id!: number;
+  public point!: number;
   public correctAns!: number;
   public detailResult!: DetailResult[];
   public submitAt!: Date;
@@ -44,6 +45,14 @@ ExamResult.init(
     isPass: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    point: {
+      type: DataTypes.DOUBLE,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+        max: 10,
+      },
     },
     correctAns: {
       type: DataTypes.INTEGER.UNSIGNED,
