@@ -7,6 +7,7 @@ import SurveyAttend from "../models/SurveyAttend";
 import { convertString } from "../helpers/convertToSlug";
 import { changeTime } from "../helpers/formatTime";
 import Student from "../models/Student.Model";
+import { answerMap } from "../interfaces/SurveyAnsMap";
 
 export const GetListSurvey = async (req: Request, res: Response) => {
   try {
@@ -118,18 +119,26 @@ export const TakeSurvey = async (req: Request, res: Response) => {
     const detail = await Promise.all(
       answers.map(async (question: any) => {
         const { id, answer } = question;
+
+        // Tìm câu hỏi hiện tại
         const existingQuestion = await SurveyQuestion.findOne({
           where: { id, survey_id },
         });
+
         if (existingQuestion) {
-          let yesCount = existingQuestion.yes;
-          let noCount = existingQuestion.no;
-          answer ? (yesCount += 1) : (noCount += 1);
-          await SurveyQuestion.update(
-            { yes: yesCount, no: noCount },
+          const columnToUpdate = answerMap[answer];
+
+          if (!columnToUpdate) {
+            throw new Error("Câu trả lời không hợp lệ!");
+          }
+
+          // Tăng giá trị của cột tương ứng
+          await SurveyQuestion.increment(
+            { [columnToUpdate]: 1 },
             { where: { id, survey_id } }
           );
         }
+
         return { id, answer };
       })
     );

@@ -31,12 +31,27 @@ SurveyQuestion.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    yes: {
+    very_disagree: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
-    no: {
+    disagree: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    neutral: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    agree: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    very_agree: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
